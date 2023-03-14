@@ -1,0 +1,17 @@
+* Emacs
+*~
+
+# Windows
+Thumbs.db
+
+# LaTeX
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.log
+*.out
+*.toc
+*.run.xml
+
+/notes.pdf
