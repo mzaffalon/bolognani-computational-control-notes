@@ -137,13 +137,15 @@
 \label{sec:optimal-control-beyond-lqr}
 
 Model Predictive Control (MPC) is a process control where the control input $\bsu$ and the states $\bsx$ must satisfy a set of contraints:
-\begin{align}
+\begin{equation}
   \label{eq:MPC-general-formulation}
-  J(X_0) = \min_{u_0,\ldots,u_{K-1}, x_0,\ldots,x_K} &\sum_{k=0}^{K-1} g_k(x_k,u_k) + g_K(x_K),\\
-  \text{subject to } & x_{k+1} = f(x_k,u_k) \\
-                                                     & x_0 = X_0 \\
-                                                     & x_k \in \mathcal{X}_k,\ u_k \in \mathcal{U}_k
-\end{align}
+  \begin{aligned}
+    J(X_0) = \min_{u_0,\ldots,u_{K-1}, x_0,\ldots,x_K} &\sum_{k=0}^{K-1} g_k(x_k,u_k) + g_K(x_K),\\
+    \text{subject to } & x_{k+1} = f(x_k,u_k) \\
+                                                       & x_0 = X_0 \\
+                                                       & x_k \in \mathcal{X}_k,\ u_k \in \mathcal{U}_k
+  \end{aligned}
+\end{equation}
 Here $g_k$ is a non-negative cost function. In the presence of constraints, one cannot find the optimal solution by setting the gradients $\nabla_{u_k} V$ of the cost-to-go
 \begin{equation*}
   V(\bsx,\bsu) = \sum_{k=0}^{T-1} g_k(x_k,u_k) + g_T(x_T),\quad x_{k+1} = f(x_k,u_k)
@@ -295,7 +297,7 @@ In other words, given a ball of radius $\epsilon$, any trajectory starting from 
 An equilibrium is called \emph{asymptotically stable} if it is stable and $\lim_{k\rightarrow \infty} ||x_k||=0$.
 
 \begin{theorem}[Lyapunov theorem]
-  Given a discrete system with dynamics $x^+ = f(x)$, if $W$ is a   real-valued function such that
+  Given a discrete system with dynamics $x^+ = f(x)$, if $W$ is a real-valued function such that
   \begin{align*}
     %\label{eq:Lyapunov-theorem}
     W(0)=0\text{ and }W(x)>0\quad \forall x\neq 0 \\
@@ -309,15 +311,17 @@ A survey of formulation of Lyapunov theory for discrete systems is available at 
 \subsection{Stability of MPC}
 \label{sec:stability-MPC}
 
-To prove asymptotically stability, we need to find a Lyapunov function $W(x)$ that satisfies the theorem, for the equilibrium point $(x,u)=(0,0)$.
+To prove asymptotically stability (of the closed loop problem, but is the open loop asymptotically stable), we need to find a Lyapunov function $W(x)$ that satisfies the theorem, for the equilibrium point $(x_S,u_S)=(0,0)$.
 
-We consider first the simpler case of stability of the infinite horizon problem. For simplicity we consider a system without contraints because their presence does not change the validity of the proof. The function\footnote{We need to fix the indices here: why do   we take the range $[k,\infty]$ or $[k,k+K-1]$ instead of   $[0,K-1]$?.}
+We consider first the simpler case of stability of the infinite horizon unconstrained problem. The proof does not depend on the
+
+For simplicity we consider a system without contraints because their presence does not change the validity of the proof. The function
 \begin{equation*}
-  W(x) = \min_{\bsu,\bsx} \sum_{s=k}^\infty g_s(x_s,u_s).
+  W(x) = \min_{\bsx,\bsu} \sum_{k=0}^\infty g_k(x_k,u_k).
 \end{equation*}
-is a candidate for the Lyapunov function provided that 1. $W(x)$ is only zero at the target equilibrium (such as the quadratic objective functions seen so far) and 2. that it decreases along closed-loop (also open loop or not?) trajectories of the system. This is the case because the MPC controller finds the optimal control input $\bsu^\star$ that minimizes the problem
+is a candidate for the Lyapunov function provided that 1. $W(x)$ is only zero at the target equilibrium (such as the quadratic objective functions seen so far) and 2. that it decreases along trajectories of the system. This is the case because the MPC controller finds the optimal control input $\bsu^\star$ that minimizes the problem
 \begin{equation*}
-  V_k^\infty(\bsx,\bsu) \equiv \sum_{s=k}^\infty g_s(x_s,u_s).
+  V^\infty(\bsx_i,\bsu_i) \equiv \sum_{k=0}^\infty g_k(x_{i,k},u_{i,k}).
 \end{equation*}
 By Bellman's principle, the optimal trajectory minimizes also the ``tail'' cost starting at the subsequent time $k+1$
 \begin{equation*}
@@ -325,11 +329,11 @@ By Bellman's principle, the optimal trajectory minimizes also the ``tail'' cost 
 \end{equation*}
 and therefore we have that
 \begin{equation*}
-  W(x_{k+1}) = W(x_k) - g_k(x_k,u_0^\star(x_k)) < W(x_k).
+  W(x_{i+1}) = W(x_i) - g_k(x_k,u_0^\star(x_k)) < W(x_i).
 \end{equation*}
 This poses the restriction than $g_k$ be a strictly positive quantity: if a state $\bs{\bar{x}}$ is not weighted in the cost function and $g_k(\bs{\bar{x}})=0$, then $W(x)$ defined above is not strictly decreasing and would not be a Lyapunov function for the \emph{asymptotic} stability test.
 
-For a finite receding horizon MPC problem with horizon length $K$, the trick above does not apply because at $k+1$ the new cost to go includes the term $g_{k+K+1}$ and excludes $g_k$
+For a finite receding horizon MPC problem with horizon length $K$, the trick above does not apply because at $i+1$ the new cost to go includes the term $g_{K}()$ and excludes $g_k$
 \begin{align*}
   V^K_{k+1}(\bsu,\bsx) &= \sum_{s=k+1}^{k+K+1}g_s(x_s,u_s) \\
                        &= V_k(\bsu,\bsx) + g_{k+K+1}(x_{k+K+1},u_{k+K+1}) - g_k(x_k,u_k)
@@ -341,11 +345,12 @@ and there is no guarantee that the requirement
 is satisfied.
 
 We can however construct a new optimization problem equal to the original one to which we add the constraint $x_K=0$ on last state $x_K$
-\begin{align*}
+\begin{align}
+  \label{eq:lyapunov-tracking-MPC}
   W(x) \qquad\quad\equiv \min_{\bsu,\bsx} &\quad \sum_{k=0}^{K-1} g_k(x_k,u_k) \\
   \text{subject to } &\quad x_{k+1} = f(x_k,u_k) \\
-  &\quad  x_0 = x, x_K = 0
-\end{align*}
+  &\quad  x_0 = x,\ x_K = 0
+\end{align}
 following the intuition that, because one is trying to stabilize the system, the final state will be close to zero. This is a Lyapunov function if we prove that this is a decreasing function along a trajectory.
 
 Assume we found the optimal solution $\bsu_{k+1}^\star$ to the modified problem for $k+1$: this has a lower cost than the suboptimal solution $\bsu_{k+1}$ for step $k+1$ obtained by taking the optimal solution $\bsu_k^\star$ for step $k$, removing state $u_k$ and adding $u_{k+K+1} = 0$ such that $x_{k+K+1} = 0$. The suboptimal solution $\bsu_{k+1}$ conversely has a lower cost than the optimal solution $\bsu_k^\star$ because we have removed the cost $g_k(x,u_k)$:
@@ -368,12 +373,16 @@ We have assumed feasibility (needs to be define or/and give an example of proble
 \section{Steady-State Selection}
 \label{sec:steady-state-selection}
 
-We consider two cases of regulating the system to steady state.
+Until now we have assumed we want to regulate at the steady-state $(x_s,u_s) = (0,0)$. There are sometimes situations where we want the plant to operate at a different working point $x_s\neq 0$ and to allow a constant input $u_s$.
 
 \subsection{Non-zero Steady State}
 \label{sec:nonzero-steady-state}
 
-If the desired equilibrium $(x_s,u_S)$ is know in advance, MPC can be used to stabilize the system around that point by using the change of coordinates
+Why does the change of variables warrant a separate discussion? I can set up the problem in the original variables with the stage cost being $g(\bsx,\bsu) = ||\bsx-\bsx_s||_Q + ||\bsu-\bsu_s||_R$
+
+If the desired equilibrium $(x_s,u_S)$ is known in advance,
+
+MPC can stabilize the system around that point by using the change of coordinates
 \begin{equation*}
   \begin{cases}
     x = x_s + \tilde{x} \\
@@ -386,7 +395,12 @@ For systems with quadratic cost functions, the change of variables is inconseque
 \end{equation*}
 (what about the cross terms $\tilde{x}_k^\top Qx_k$? Why do they disappear?).
 
-To find the equilibrium, one solves the optimization problem to select the steady-state
+\subsection{Steady-State Selection from Specifications}
+\label{sec:steady-state-from-specs}
+
+Sometimes the problem specifies a working point $(x_\text{spec},u_\text{spec})$ so selected because it is safe and/or economic. This working point may not be a valid state, \textit{i.e} satisfying $x_\text{spec} = Ax_\text{spec}+Bu_\text{spec}$.
+
+To find the steady-state, one solves offline the optimization problem
 \begin{align*}
   \min_{u_s,u_s} & ||x_s-x_\text{spec}||_{Q_s}^2 + ||u_s-u_\text{spec}||_{R_s}^2 \\
   \text{subject to} &
@@ -399,7 +413,7 @@ To find the equilibrium, one solves the optimization problem to select the stead
   & x_s \in \mathcal{X} \\
   & u_s \in \mathcal{U}
 \end{align*}
-where the specified working point $(x_\text{spec},u_\text{spec})$ may habe been selected because they are safe and economic but are not a valid state, \textit{i.e} satisfying $x_\text{spec} = Ax_\text{spec}+Bu_\text{spec}$.
+contrained to be a valid working point.
 
 \subsection{Robustness to Perturbations}
 \label{sec:robustness-to-perturbations}
@@ -420,21 +434,23 @@ An integrator may already be present in the plant. For example in drug administr
 \section{Economic MPC}
 \label{sec:economic-mpc}
 
-Many modern control problems present complex performance metrics, such as economic aspects, regulatory specifications and use of resources. Consider an iron furnace, where the inputs are its temperature, the inflow of iron ore, limestone and coke, and the air flow and the products includes the iron yield, its quality, the CO$_2$ emission and the amount of slag. The stage cost $\ell(x,u)$ represents economic losses, energy use, cost of materials, yield\ldots. $\ell$ is a continuous lower-bounded (otherwise the problem is not well defined) generally linear function. Compare this with the non-negative stage cost $g$ that is zero at the equilibrium point and unbounded in $|\tilde{x}|$: in general this is a quadratic point $x^\top Q x + u^\top Q u$.
+eMPC require a constraint on the terminal state or the system will end up in an unrecoverable state.
 
-One solution is to represent this economic cost in the steady-state optimization problem
+Many modern control problems present complex performance metrics, such as economic aspects, regulatory specifications and use of resources. Consider an iron furnace, where the inputs are its temperature, the inflow of iron ore, limestone and coke, and the air flow and the products includes the iron yield, its quality, the CO$_2$ emission and the amount of slag. The stage cost $\ell(x,u)$ represents economic losses, energy use, cost of materials, yield\ldots. $\ell$ is a continuous lower-bounded (otherwise the problem is not well defined) function.
+
+One approach is to include the economic cost in the steady-state optimization problem
 \begin{align*}
   \min_{x_s,u_s} &\ \ell(x_s,u_s) \\
   \text{subject to} &\ x_s = f(x_s,u_s) \\
                  & x\in \mathcal{X},\ u\in \mathcal{U}
 \end{align*}
-and to use the MPC cost to track the steady state $(x_s,u_s)$. A deviation from the working point (for instance the optimal furnace temperature) is taken care of by the quadratic cost of the MPC controller. The splitting of the offline computation of the steady-state point and the online tracking computation is simpler to analyze but suffers from suboptimal cost of the system trajectory.
+and to use MPC to track the steady state $(x_s,u_s)$, for instance the optimal furnace temperature, using a quadratic cost function $g(x-x_s,u-u_s)$. The splitting of the offline computation of the steady-state point and the online tracking computation is simpler to analyze but suffers from suboptimal cost of the system trajectory.
 
 Economic MPC uses instead the loss function $\ell$ directly in the dynamic optimization problem
 \begin{align*}
   \min_{\bsx,\bsu} & \sum_{k=0}^{K-1} \ell(x_k,u_k) \\
   \text{subject to} &\ x_{k+1} = f(x_k,u_k) \\
-                   & x_0 = x \\
+                   & x_0 = x,\ x_K=x_s \\
                    & x_k\in \mathcal{X}_k,\ u_k\in \mathcal{U}_k
 \end{align*}
 eliminating the cascaded optimization (determination of steady-state point followed by reference tracking) by replacing with a single time-scale problem for which the optimization can compute an efficient trajectory, at the cost of a more computationally difficult problem to solve in real-time (may not be convex?). In economic MPC the system dynamic $x^+=f(x,u)$ is in general non-linear.
@@ -454,13 +470,32 @@ The trick employed to solve such problems is to solve the finite horizon problem
 \subsection{Stability and Performance of Economic MPC}
 \label{sec:stability-performance-economic-MPC}
 
-In tracking MPC, the terminal constraint $x_K=0$ was essential in proving that eq.~\eqref was a Lyapunov function for the plant. The key idea was that a valid new trajectory would keep the state close to equilibrium at the tail. However for economic MPC, the same manipulation does not work, since
+In tracking MPC, the terminal constraint $x_K=0$ was essential in proving that eq.~\eqref{eq:lyapunov-tracking-MPC} was a Lyapunov function for the plant. The key idea was that a valid new trajectory would keep the state close to equilibrium at the tail. However for economic MPC, the same manipulation does not work, since
+\begin{equation}
+  \label{eq:eMPC-Lyapunov-like-inequality}
+  W(x_{i+1}) \le W(x_i) + \ell(x_s,u_s) - \ell(x_i,u_0^\star(x_i))
+\end{equation}
+is not in general smaller than $W(x_i)$ because to keep the system at steady-state, the cost may exceed the cost of the state after applying control input $u_0^\star(x)$. In contrast with tracking MPC where the stage cost $g_k$ had the property of being zero at the equilibrium point, in economic MPC, $\ell$ is not minimized at the steady state and stronger conditions are required to guarantee asymptotic stability. This is outside the scope of this introduction.
+
+Since eMPC can generate periodic trajectories, are these trajectories better than tracking a point? The following theorem guarantees that trajectories created started from an arbitrary point are more efficient that tracking a steady-state provided the number of time steps $N$ is sufficiently large:
+\begin{theorem}
+  Let $x_i$ be a closed-loop trajectory generated by the economic MPC controller with terminal constraint $x_s$. Then, for any initial condition
+  \begin{equation}
+    \label{eq:eMPC-inequality-trajectory-steadystate}
+    \limsup_{N\rightarrow \infty} \frac{1}{N} \sum_{k=0}^{N-1} \ell(x_k,u_k) \le \ell(x_s,u_s).
+  \end{equation}
+\end{theorem}
+The proof relies on the identity eq.~\eqref{eq:eMPC-Lyapunov-like-inequality}, rewritten as
 \begin{equation*}
-  W(f(x,u_0^\star(x))) \le W(x) + \ell(x_s,u_s) - \ell(x,u_0^\star(x))
+  W(x_{i+1}) - W(x_i) \le \ell(x_s,u_s) - \ell(x_i,u_0^\star(x_i))
 \end{equation*}
-is not in general smaller than $W(x)$ because to keep the system at steady-state, the cost may exceed the cost of the state after applying control input $u_0^\star(x)$. In contrast with tracking MPC where the stage cost $g_k$ had the property of being zero at the equilibrium point, in economic MPC, $\ell$ is not minimized at the steady state and stronger conditions are required to guarantee asymptotic stability. This is outside the scope of this introduction.
+Summing the first $N$ terms of the series and dividing by $N$ gives
+\begin{equation*}
+  \frac{1}{N}\sum_{i=0}^{N-1} \left[W(x_{i+1}) - W(x_i)\right] = \underbrace{\frac{W(x_N) - W(x_0)}{N}}_{\rightarrow 0 \text{ when } N\rightarrow 0} \le \frac{1}{N}\sum_{i=0}^{N-1}  \left[\ell(x_s,u_s) - \ell(x_i,u_0^\star(x_i))\right]
+\end{equation*}
+since the quantity $W(x_N) - W(x_0)$ is bounded and after rearranging the terms, we obtain the expression eq.~\eqref{eq:eMPC-inequality-trajectory-steadystate}.
 
-
+Notes: problem is infeasible when it cannot be solved, for instance if the solution cannot reach the final state.
 
 \end{document}
 %%% Local Variables:
