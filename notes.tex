@@ -6,7 +6,7 @@
 \usepackage{amssymb}
 \usepackage{graphicx}
 \usepackage{hyperref}
-%\usepackage{biblatex}
+\usepackage{biblatex}
 \date{\today}
 \title{}
 
@@ -16,6 +16,8 @@
 \newcommand{\bsx}{\bs{\mathrm{x}}}
 
 \newtheorem{theorem}{Theorem}
+
+\addbibresource{notes.bib}
 
 \begin{document}
 
@@ -136,17 +138,17 @@
 \chapter{Optimal Control beyond LQR}
 \label{sec:optimal-control-beyond-lqr}
 
-Model Predictive Control (MPC) is a discrete process control where the control input $\bsu = \{u_0,u_1,\ldots,u_{K-1}\}$ and the states $\bsx$ must satisfy a set of contraints:
+Model Predictive Control (MPC) is a discrete process control where the control input $\bsu = \{u_0,u_1,\ldots,u_{K-1}\}$ and the states $\bsx = \{x_0,x_1,\ldots,x_{K-1},x_K\}$ must also satisfy a set of contraints:
 \begin{equation}
   \label{eq:MPC-general-formulation}
   \begin{aligned}
-    J(X_0) = \min_{\bsx,\bsu} &\sum_{k=0}^{K-1} g_k(x_k,u_k) + g_K(x_K),\\
+    \min_{\bsx,\bsu} &\sum_{k=0}^{K-1} g_k(x_k,u_k) + g_K(x_K),\\
     \text{subject to } & x_{k+1} = f(x_k,u_k) \\
                                                        & x_0 = X_0 \\
                                                        & x_k \in \mathcal{X}_k,\ u_k \in \mathcal{U}_k
   \end{aligned}
 \end{equation}
-where $g_k$ is a non-negative cost function such as a quadratic one
+where $X_0$ is the initial state and $g_k$ is a non-negative cost function such as a quadratic one
 \begin{equation}
   \label{eq:quadratic-stage-cost}
   g_k(x,u) = x^\top Q_k x + u^\top R_k u.
@@ -160,11 +162,11 @@ to zero as it was the case for the LQR problem. The optimal control input sequen
 
 In case of model mismatch or state perturbation however, the system will deviate increasingly more from the predicted trajectory $\bsx^\star$. If a measurement of the system state is available, it makes sense to find a new optimal control input vector using the measured state as the initial point for the optimization. (Question: if this is the case, then why not optimizing only the tail such that also in closed loop the trajectory is completed after $K$ steps? )
 
-Closed-loop control applies the following strategy: at time step $i$ with the system in state $x_i$, compute the optimal control input $\bsu_i^\star=\{u_{i,0}^\star,u_{i,1}^\star\ldots,u_{i,K-1}^\star\}$, apply the first element of it, $u_{i,0}^\star$, and discard the remaining elements. At the following time step $i+1$, with the system having evolved into state $x_{i+1}$, solve again the optimization with initial state $x_{i+1}$ to find the optimal control input $\bsu_{i+1}^\star$, apply the first element $u_{i+1,0}^\star$ and discard the remaining elements. This process is repeated.
+Closed-loop control therefore applies the following strategy: at time step $i$ with the system in state $x_i$, compute the optimal control input $\bsu_i^\star=\{u_{i,0}^\star,u_{i,1}^\star\ldots,u_{i,K-1}^\star\}$, apply the first element of it, $u_{i,0}^\star$, and discard the remaining elements. At the following time step $i+1$ and the system having evolved into state $x_{i+1}$, solve again the optimization with initial state $x_{i+1}$ to find the optimal control input $\bsu_{i+1}^\star$, apply the first element $u_{i+1,0}^\star$ and discard the remaining elements. This process is repeated.
 
 The closed-loop approach permits us to solve the optimization problem with an horizon of length $K$ in a receding way, by restarting the control process from the current state. This is possible since the system is Markovian and the current state is all one needs to compute the optimal control for the future.
 
-If the model closely represents the system and in case of perturbations, the closed-loop approach can be restarted using the predicted state $x_{k+1} = f(x_k,u_k$).
+If the model closely represents the system and in absence of perturbations, the closed-loop approach can be restarted using the predicted state $x_{k+1} = f(x_k,u_k$); in this case on has $x_{i+1,0}^\star = f(x_{i,0}^\star,u_{i,0}^\star$).
 
 Either way, closed-loop MPC solves repeatedly the exact same problem, parametrised by the initial state $x_0=x$
 \begin{align*}
@@ -192,27 +194,112 @@ To summarize: MPC is a static\footnote{A static controller has no memory of the 
   \end{equation*}}, nonlinear, time-invariant feedback\footnote{Because $f$ does not depend on $k$.} control-law.
 
 
-\subsection{Does MPC Solve the Optimal Control Problem?}
+\subsection{Does MPC Realize the Optimal Control Problem Solution?}
 \label{sec:MPC-not-an-optimal-control-solver}
 
-The 
-\emph{This part in the video is not clear.}
-
-MPC does not solve the global optimization control problem, because it
-discards
-
-Consider the problem
+Despite MPC solving at each time step $i$ the optimal control problem eq.~\eqref{eq:MPC-general-formulation}, the MPC trajectory does not realize the optimal trajectory $\bsu_i^\star$, because MPC only applies the first control input $u_0^\star$ and discards the rest. Consider the pathological problem
 \begin{align*}
   \min_{\bsu,\bsx} & \sum_{k=0}^{K-1}\frac {1}{k}||u_u|| + ||x(K)||^2\\
-  \text{subject to } &x_{k+1} = x_k+u_k
+  \text{subject to } &x_{k+1} = x_k+u_k.
 \end{align*}
-the control action computed by MPC will be zero until step $K-1$ and
-then??? Not clear here.
+The optimal control optimization finds a solution where the first control input $u_0^\star$ must be zero or the cost explodes and delays the work to minimize the cost to go to a later time. By applying only the first control input, MPC will remain stuck in its initial state and the optimal control solution is never realized. This is so also in absence of disturbance and model mismatch.
+
+From this example, it is clear that MPC is a way to compute a good controller but in no way a robust optimal controller.
 
 \subsection{MPC and Finite-Time LQR}
 \label{sec:MPC-finite-time-LQR}
 
 I did not understand it.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Stability}
+\label{sec:mpc-stability}
+
+MPC is a principled way to design static, time-invariant, non-linear feedback control law. While local stability can be analyzed by linearizing the control law around the equilibrium and using the techniques from Control Systems (Nyquist, Bode,\ldots), the tool to investigate global stability of non-linear systems is the Lyapunov theorem.
+
+\subsection{Lyapunov Stability}
+\label{sec:lyapunov-stability}
+
+Definition: The point $x=0$ is stable for the dynamics $x_{k+1} = f(x_k)$ if a small perturbation of the state perturbs the subsequent state trajectory in a continuous manner.
+
+In mathematical terms,
+\begin{equation}
+  \label{eq:lyapunov-stability-stable-equilibrium}
+  \forall \epsilon > 0,\ \exists \delta > 0 \text{ such that } ||x_0|| < \delta \rightarrow ||x_k|| < \epsilon\ \forall k \ge 0.
+\end{equation}
+In other words, given a ball of radius $\epsilon$, any trajectory starting from within a ball of radius $\delta$ will never leave the larger ball with radius $\epsilon$.
+
+An equilibrium is called \emph{asymptotically stable} if it is stable and $\lim_{k\rightarrow \infty} ||x_k||=0$.
+
+\begin{theorem}[Lyapunov theorem]
+  \label{th:lyapunov}
+  Given a discrete system with dynamics $x_{k+1} = f(x_k)$ and equilibrium $x=0$ (?), if $W(x)$ is a real-valued function such that
+  \begin{align*}
+    W(0)=0 \text{ and } W(x)>0\quad \forall x\neq 0 \\
+    W(f(x)) < W(x)\quad \forall x\neq 0
+  \end{align*}
+  then the point $x=0$ is asymptotically stable.
+\end{theorem}
+A survey of formulation of Lyapunov theory for discrete systems is available at \url{https://arxiv.org/abs/1809.05289}.
+
+\subsection{Stability of MPC}
+\label{sec:stability-MPC}
+
+To prove asymptotically stability of the closed loop problem\footnote{Note that the open loop is trivially asymptotically stable because it consists of a sequence of finite length $K$.}, we need to find a Lyapunov function $W(x)$ that satisfies theorem~\ref{th:lyapunov}, for the equilibrium point $(x_S,u_S)=(0,0)$.
+
+We consider first the simpler case of stability of the infinite horizon unconstrained problem. The presence of constraints does not alter the validity of the proof. The function
+\begin{equation*}
+  W(x) = \min_{\bsx,\bsu} \sum_{k=0}^\infty g_k(x_k,u_k).
+\end{equation*}
+is a candidate for the Lyapunov function provided that 1. $W(x)$ is only zero at the target equilibrium (such as when $g_k$ is a quadratic objective function) and 2. that it decreases along trajectories of the system. This is the case because the MPC controller finds $(\bsx^\star, \bsu^\star)$ that minimizes the problem
+\begin{equation*}
+  V^\infty_i(\bsx,\bsu) \equiv \sum_{k=i}^\infty g_k(x_k,u_k).
+\end{equation*}
+By Bellman's principle, the optimal trajectory minimizes also the ``tail'' cost starting at the subsequent time $i+1$
+\begin{equation*}
+  V_{i+1}^\infty(\bsx,\bsu) = \sum_{k=i+1}^\infty g_k(x_k,u_k)
+\end{equation*}
+and therefore we have that
+\begin{equation*}
+  W(x_{i+1}) = W(x_i) - g_i(x_i,u_0^\star(x_i)) < W(x_i).
+\end{equation*}
+This poses the restriction than $g_k$ is a strictly positive quantity: if a state $\bs{\bar{x}}$ is not weighted in the cost function and $g_k(\bs{\bar{x}})=0$, then $W(x)$ defined above is not strictly decreasing and would not be a Lyapunov function for the asymptotic stability test.
+
+\textbf{The proof for the finite horizon relies on $g$ being independent of k: this was not the case for the infinite horizon. Saverio, can we discuss this?}
+
+For a finite receding MPC problem with horizon length $K$, the trick above does not apply because at $i+1$, the new cost to go includes the term $g_{K}()$ and excludes $g_k$
+\begin{align*}
+  V^K_{k+1}(\bsu,\bsx) &= \sum_{k=0}^{K-1}g(x_k,u_k) \\
+                       &= V_k(\bsu,\bsx) + g_{k+K+1}(x_{k+K+1},u_{k+K+1}) - g_k(x_k,u_k)
+\end{align*}
+and there is no guarantee that the requirement
+\begin{equation*}
+  \min_{\bsu,\bsx} V^K_{i+1} < \min_{\bsu',\bsx'} V^K_i
+\end{equation*}
+is satisfied.
+
+We can however construct a new optimization problem equal to the original one to which we add the constraint $x_K=0$ on last state $x_K$
+\begin{equation}
+  \label{eq:lyapunov-tracking-MPC}
+  \begin{aligned}
+    W(x) \qquad\quad\equiv \min_{\bsu,\bsx} &\quad \sum_{k=0}^{K-1} g_k(x_k,u_k) \\
+    \text{subject to } &\quad x_{k+1} = f(x_k,u_k) \\
+                                            &\quad  x_0 = x,\ x_K = 0
+  \end{aligned}
+\end{equation}
+following the intuition that, because one is trying to stabilize the system, the final state will be close to zero. This is a Lyapunov function if we prove that this is a decreasing function along a trajectory.
+
+Assume we found the optimal solution $\bsu_{k+1}^\star$ to the modified problem for $k+1$: this has a lower cost than the suboptimal solution $\bsu_{k+1}$ for step $k+1$ obtained by taking the optimal solution $\bsu_k^\star$ for step $k$, removing state $u_k$ and adding $u_{k+K+1} = 0$ such that $x_{k+K+1} = 0$. The suboptimal solution $\bsu_{k+1}$ conversely has a lower cost than the optimal solution $\bsu_k^\star$ because we have removed the cost $g_k(x,u_k)$:
+\begin{align*}
+  W(x_{k+1}) &= V_{k+1}^K(\bsx_{k+1}^\star, \bsu_{k+1}^\star) & \text{definition of $W$} \\
+             & \leq V_{k+1}^K(\bsx_{k+1}, \bsu_{k+1}) & \text{definition of optimal trajectory} \\
+             & = \underbrace{V_k^K(\bsx_k^\star, \bsu_k^\star)}_{W(x_k)} - g_k(x_k^\star,u_k^\star) + \\
+             & \underbrace{g_{k+K+1}(x_{k+K+1},u_{k+K+1})}_{=0} & \text{definition of $V_k^K$} \\
+  & < W(x_k)
+\end{align*}
+This proves that $W$ is a decreasing function on a trajectory.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Implementation of MPC}
@@ -251,7 +338,6 @@ The condition breaks down into the following two cases:
 The behaviour is qualitatively different whether the minimum is inside or at the boundary.
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsubsection{Offline computation: a Simple Minimization Problem}
 
 Let us consider the following toy example:
@@ -285,105 +371,24 @@ Note that the solution is continuous at $x_0=2$: we have therefore the solution
     u_0 = 1-x_0 & \text{ for } x_0 \ge 2.
   \end{cases}
 \end{equation*}
-Each constraint defines two (affine) regions and for each region there is a different control action. If there are $n$ constraints there will be at most $2^n$ regions, according to the way the constraints overlap. For a large number of constraints, the problem becomes intractables also for offline computation. In practice, one problem to solve is to figure out where in the state space one is.
+In this example, each constraint defines two (affine) regions and for each region there is a different control action. If there were $n$ affine constraints, there would be at most $2^n$ regions, according to the way the constraints overlap. For a large number of constraints, the problem becomes intractables also for offline computation. In practice, one problem to solve is to figure out where the current state is in the state space.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Online Computation of the Optimal Control Input}
 \label{sec:online-computation-MPC}
 
 Online computation computes the \textbf{value} $u_0^\star(\cdot)$ at every iteration and therefore it is typically applied to processes that have constraints and mainly used in slow dynamics.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Stability}
-\label{sec:mpc-stability}
+\subsection{Other Practical Implementations Aspects}
+\label{sec:other-practical-implementation-aspects}
 
-MPC is a principled way to design static, time-invariant, non-linear feedback control law. While local stability can be analyzed by linearizing the control law around the equilibrium and using the techniques from Control Systems (Nyquist, Bode,\ldots), the tool to investigate global stability of non-linear systems is the Lyapunov theorem.
+Real world control problems often have an infinite horizon: they are computationally impossible to solve, unless the system has special properties. The finite horizon receding MPC is a computationally tractable approximation to the inifite horizon problem, the approximation being good provided $K$ is chosen large enough that the interesting dynamics of the original problem has a time-scale shorter than $K$.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Lyapunov Stability}
-\label{sec:lyapunov-stability}
-
-Definition: The point $x=0$ is stable for the dynamics $x_{k+1} = f(x_k)$ if a small perturbation of the state perturbs the subsequent state trajectory in a continuous manner.
-
-In mathematical terms,
-\begin{equation}
-  \label{eq:lyapunov-stability-stable-equilibrium}
-  \forall \epsilon > 0,\ \exists \delta > 0 \text{ such that } ||x_0|| < \delta \rightarrow ||x_k|| < \epsilon\ \forall k \ge 0.
-\end{equation}
-In other words, given a ball of radius $\epsilon$, any trajectory starting from within a ball of radius $\delta$ will never leave the larger ball with radius $\epsilon$.
-
-An equilibrium is called \emph{asymptotically stable} if it is stable and $\lim_{k\rightarrow \infty} ||x_k||=0$.
-
-\begin{theorem}[Lyapunov theorem]
-  \label{th:lyapunov}
-  Given a discrete system with dynamics $x_{k+1} = f(x_k)$ and equilibrium $x=0$ (?), if $W(x)$ is a real-valued function such that
-  \begin{align*}
-    W(0)=0 \text{ and } W(x)>0\quad \forall x\neq 0 \\
-    W(f(x)) < W(x)\quad \forall x\neq 0
-  \end{align*}
-  then the point $x=0$ is asymptotically stable.
-\end{theorem}
-A survey of formulation of Lyapunov theory for discrete systems is available at \url{https://arxiv.org/abs/1809.05289}.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Stability of MPC}
-\label{sec:stability-MPC}
-
-To prove asymptotically stability of the closed loop problem\footnote{Note that the open loop is trivially asymptotically stable because it consists of a sequence of finite length $K$.}, we need to find a Lyapunov function $W(x)$ that satisfies theorem~\ref{th:lyapunov}, for the equilibrium point $(x_S,u_S)=(0,0)$.
-
-We consider first the simpler case of stability of the infinite horizon unconstrained problem. The presence of constraints does not alter the validity of the proof. The function
-\begin{equation*}
-  W(x) = \min_{\bsx,\bsu} \sum_{k=0}^\infty g_k(x_k,u_k).
-\end{equation*}
-is a candidate for the Lyapunov function provided that 1. $W(x)$ is only zero at the target equilibrium (such as when $g_k$ is a quadratic objective function) and 2. that it decreases along trajectories of the system. This is the case because the MPC controller finds $(\bsx^\star, \bsu^\star)$ that minimizes the problem
-\begin{equation*}
-  V^\infty_i(\bsx,\bsu) \equiv \sum_{k=i}^\infty g_k(x_k,u_k).
-\end{equation*}
-By Bellman's principle, the optimal trajectory minimizes also the ``tail'' cost starting at the subsequent time $i+1$
-\begin{equation*}
-  V_{i+1}^\infty(\bsx,\bsu) = \sum_{k=i+1}^\infty g_k(x_k,u_k)
-\end{equation*}
-and therefore we have that
-\begin{equation*}
-  W(x_{i+1}) = W(x_i) - g_i(x_i,u_0^\star(x_i)) < W(x_i).
-\end{equation*}
-This poses the restriction than $g_k$ is a strictly positive quantity: if a state $\bs{\bar{x}}$ is not weighted in the cost function and $g_k(\bs{\bar{x}})=0$, then $W(x)$ defined above is not strictly decreasing and would not be a Lyapunov function for the asymptotic stability test.
-
-For a finite receding horizon MPC problem with horizon $K$, the trick above does not apply because at $i+1$, the new cost to go includes the term $g_{K}()$ and excludes $g_k$
-\begin{align*}
-  V^K_{k+1}(\bsu,\bsx) &= \sum_{s=k+1}^{k+K+1}g_s(x_s,u_s) \\
-                       &= V_k(\bsu,\bsx) + g_{k+K+1}(x_{k+K+1},u_{k+K+1}) - g_k(x_k,u_k)
-\end{align*}
-and there is no guarantee that the requirement
-\begin{equation*}
-  \min_{\bsu,\bsx} V^K_{i+1} < \min_{\bsu',\bsx'} V^K_i
-\end{equation*}
-is satisfied.
-
-We can however construct a new optimization problem equal to the original one to which we add the constraint $x_K=0$ on last state $x_K$
-\begin{equation}
-  \label{eq:lyapunov-tracking-MPC}
-  \begin{aligned}
-    W(x) \qquad\quad\equiv \min_{\bsu,\bsx} &\quad \sum_{k=0}^{K-1} g_k(x_k,u_k) \\
-    \text{subject to } &\quad x_{k+1} = f(x_k,u_k) \\
-                                            &\quad  x_0 = x,\ x_K = 0
-  \end{aligned}
-\end{equation}
-following the intuition that, because one is trying to stabilize the system, the final state will be close to zero. This is a Lyapunov function if we prove that this is a decreasing function along a trajectory.
-
-Assume we found the optimal solution $\bsu_{k+1}^\star$ to the modified problem for $k+1$: this has a lower cost than the suboptimal solution $\bsu_{k+1}$ for step $k+1$ obtained by taking the optimal solution $\bsu_k^\star$ for step $k$, removing state $u_k$ and adding $u_{k+K+1} = 0$ such that $x_{k+K+1} = 0$. The suboptimal solution $\bsu_{k+1}$ conversely has a lower cost than the optimal solution $\bsu_k^\star$ because we have removed the cost $g_k(x,u_k)$:
-\begin{align*}
-  W(x_{k+1}) &= V_{k+1}^K(\bsx_{k+1}^\star, \bsu_{k+1}^\star) & \text{definition of $W$} \\
-             & \leq V_{k+1}^K(\bsx_{k+1}, \bsu_{k+1}) & \text{definition of optimal trajectory} \\
-             & = \underbrace{V_k^K(\bsx_k^\star, \bsu_k^\star)}_{W(x_k)} - g_k(x_k^\star,u_k^\star) + \\
-             & \underbrace{g_{k+K+1}(x_{k+K+1},u_{k+K+1})}_{=0} & \text{definition of $V_k^K$} \\
-  & < W(x_k)
-\end{align*}
-This proves that $W$ is a decreasing function on a trajectory.
-
-The infinite horizon problem is computationally impossible to solve, unless the system has special properties. The receding MPC problem with horizon $K$ is a computationally tractable approximation to the inifite horizon problem, the approximation being good provided $K$ is chosen large enough that the interesting dynamics has finished.
-
-MPC problems are usually set up by adding a final cost or constraints conditions on the final state: since the point $(x,u)=(0,0)$ is an equilibrium, one can impose the constraint$x_K=0$ on the last state. Alternatively, one can impose $x_K$ live in a small space $\mathcal{X}_K$, the reason being that if there is a region of the state space sufficiently close to equilibrium that is feasible, the trajectory starting at time $k+1$ will keep the system feasible and hopefully easy to control. Another possiblity is to approximate the tail of the infinite horizon problem from element $K+1$ onwards by a large final cost $g_K(x_K)$ if the final state is far from the equilibrium.
+The ``tail'' of the infinite horizon problem is taken care by the MPC formulation in one of the following ways:
+\begin{itemize}
+\item by adding a final cost or constraints conditions on the final state: since the point $(x,u)=(0,0)$ is an equilibrium, one can impose the constraint $x_K=0$ on the last state;
+\item by imposing that $x_K$ live in a small space $\mathcal{X}_K$, the reason being that if there is a region of the state space sufficiently close to equilibrium that is feasible, the trajectory starting at time $i+1$ will keep the system feasible and hopefully easy to control;
+\item by approximating the tail of the infinite horizon problem from element $K+1$ onwards by a final cost $g_K(x_K)$ that is large if the terminal state $x_K$ is far from the equilibrium.
+\end{itemize}
 
 We have assumed feasibility (needs to be define or/and give an example of problem that becomes unfeasible) of the MPC problem which may break in the absence of a zero terminal constraint.
 
@@ -391,28 +396,18 @@ We have assumed feasibility (needs to be define or/and give an example of proble
 \section{Steady-State Selection}
 \label{sec:steady-state-selection}
 
-Until now we have assumed we want to regulate at the steady-state $(x_s,u_s) = (0,0)$. There are sometimes situations where we want the plant to operate at a working point $x_s\neq 0$ and to allow a constant input $u_s$.
+Until now we have assumed we want to regulate at the steady-state $(x_s,u_s) = (0,0)$. There are sometimes situations where we want the plant to operate at a working point $x_s\neq 0$ and to allow for a constant input $u_s$.
 
-If the desired equilibrium $(x_s, u_s)$ is known in advance,
-
-
-I can set up the problem in the original variables with the stage cost being $g(\bsx,\bsu) = ||\bsx-\bsx_s||_Q + ||\bsu-\bsu_s||_R$
-
+If the desired equilibrium $(x_s, u_s)$ is known in advance, no changes to the MPC regulator are necessary except for replacing the stage cost $g_k(x,u)$ by $g_k(x-x_x,u-u_s)$ so that its minimum is at $(x_s,u_s)$.
 
 \subsection{Steady-State Selection from Specifications}
 \label{sec:steady-state-from-specs}
 
-Sometimes the problem specifies a working point $(x_\text{spec},u_\text{spec})$ so selected because it is safe and/or economic to operate. This working point may not be a valid state, \textit{i.e} it does not satisfy $x_\text{spec} = Ax_\text{spec}+Bu_\text{spec}$. To find the steady-state, one solves offline the optimization problem
+Sometimes the problem specifies a working point $(x_\text{spec},u_\text{spec})$ so selected because it is safe and/or economic to operate. This working point may not be a valid state, \textit{i.e} it does not satisfy $x_\text{spec} = f(x_\text{spec},u_\text{spec})$. To find the steady-state, one solves offline the optimization problem
 \begin{align*}
   \min_{u_s,u_s} & ||x_s-x_\text{spec}||_{Q_s}^2 + ||u_s-u_\text{spec}||_{R_s}^2 \\
-  \text{subject to} &
-                      \begin{bmatrix}
-                        I-A & -B
-                      \end{bmatrix}
-                      \begin{bmatrix}
-                        x_s \\ u_s
-                      \end{bmatrix} = 0 \\
-                 & x_s \in \mathcal{X}\ u_s \in \mathcal{U}.
+  \text{subject to } & x_s = f(x_s,u_s) \\
+                 & x_s \in \mathcal{X},\ u_s \in \mathcal{U}.
 \end{align*}
 
 
@@ -476,9 +471,9 @@ In tracking MPC, the terminal constraint $x_K=0$ was essential in proving that e
 \end{equation}
 is not in general smaller than $W(x_i)$ because to keep the system at steady-state, the cost may exceed the cost of the state after applying control input $u_0^\star(x)$. In contrast with tracking MPC where the stage cost $g_k$ had the property of being zero at the equilibrium point, in economic MPC, $\ell$ is not minimized at the steady state and stronger conditions are required to guarantee asymptotic stability. This is outside the scope of this introduction.
 
-Since eMPC can generate periodic trajectories, are these trajectories better than tracking a point? The following theorem guarantees that trajectories created started from an arbitrary point are more efficient that tracking a steady-state provided the number of time steps $N$ is sufficiently large:
+Since eMPC can generate periodic trajectories, are these trajectories better than tracking a point? The following theorem guarantees that trajectories created started from an arbitrary initial point are more efficient that tracking a steady-state provided the number of time steps $N$ is sufficiently large:
 \begin{theorem}
-  Let $x_i$ be a closed-loop trajectory generated by the economic MPC controller with terminal constraint $x_s$. Then, for any initial condition
+  Let $\{x_k,\ k=0,\ldots,N-1\}$ be a closed-loop trajectory generated by the economic MPC controller with terminal constraint $x_s$. Then, for any initial condition $x_0$
   \begin{equation}
     \label{eq:eMPC-inequality-trajectory-steadystate}
     \limsup_{N\rightarrow \infty} \frac{1}{N} \sum_{k=0}^{N-1} \ell(x_k,u_k) \le \ell(x_s,u_s).
@@ -492,7 +487,11 @@ Summing the first $N$ terms of the series and dividing by $N$ gives
 \begin{equation*}
   \frac{1}{N}\sum_{i=0}^{N-1} \left[W(x_{i+1}) - W(x_i)\right] = \underbrace{\frac{W(x_N) - W(x_0)}{N}}_{\rightarrow 0 \text{ when } N\rightarrow 0} \le \frac{1}{N}\sum_{i=0}^{N-1}  \left[\ell(x_s,u_s) - \ell(x_i,u_0^\star(x_i))\right]
 \end{equation*}
-since the quantity $W(x_N) - W(x_0)$ is bounded and after rearranging the terms, we obtain the expression eq.~\eqref{eq:eMPC-inequality-trajectory-steadystate}.
+since the quantity $W(x_N) - W(x_0)$ is bounded. After rearranging the terms, we obtain the expression eq.~\eqref{eq:eMPC-inequality-trajectory-steadystate}.
+
+A free to download book is at \cite{free-book-diehl}.
+
+\printbibliography
 
 \end{document}
 %%% Local Variables:
