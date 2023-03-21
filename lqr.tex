@@ -1,0 +1,226 @@
+\chapter{Dynamic Programming and LQR}
+\label{sec:dynamic-programming-lqr}
+
+Controlling a dynamic system consists in finding a vector of control inputs $\bsu = \{u_t\}_{t=0,1,\ldots}$ that minimize a cost function $J(\bsu)$,
+\begin{equation*}
+  \min_{\bsu\in\mathcal{U}} J(\bsu)
+\end{equation*}
+where the control input is constrained to the space $\mathcal{U}$. This is generally a hard problem for the following reasons:
+\begin{itemize}
+\item $\bsu$ the state space $\bsu$ is large;
+\item a fairly accurate model of the system is required. This can be obtained by first principles, by numerical simulation or can be a black box (oracle) that, given the control input $\bsu$, computes the system trajectory;
+\item the optimization problem is in general non-convex. For convex problems, which have a single (global) minimum\footnote{Not all functions with single minimum are convex: for instance
+    \begin{equation*}
+      f(x) = -\frac{1}{1+x^2}
+    \end{equation*}}, there exists efficient solvers.
+\end{itemize}
+From a practical point of view, the open-loop nature of the optimal control sequence makes it useless in the presence of disturbances and uncertainties.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Bellman's Principle}
+\label{sec:bellmans-principle}
+
+The problem becomes tractable under the following conditions
+\begin{itemize}
+\item there exists a Markovian state that evolves according to
+  \begin{equation*}
+    x_{t+1} = f_t(x_t,u_t).
+  \end{equation*}
+  In other words, the complete state of the system is described by $x_t$ which, together with $u_t$ is the only thing needed to know for the future evolution;
+\item the initial condition $x_0$ is known;
+\item the cost is addictive over time
+  \begin{equation*}
+    J(\bsx,\bsu) = \sum_t g_t(x_t,u_t).
+  \end{equation*}
+\end{itemize}
+Under these assumptions, Bellman's principle allows us to solve the optimization problem
+\begin{equation}
+  \label{eq:general-optimization-problem}
+  \begin{aligned}
+    V(X_0) = \min_{\bsx,\bsu} & \sum_{t=0}^T g_t(x_t,u_t) + g_T(x_T) \\
+    \text{subject to } & x_{t+1} = f_t(x_t,u_t),\ x_o=X_0 \\
+                              &x_t \in \mathcal{X}_t\quad \forall t \\
+                              &u_t \in \mathcal{U}_t\quad \forall t.
+  \end{aligned}
+\end{equation}
+
+\subsection{Dynamic Programming}
+\label{sec:dynamic-programming}
+
+The problem is approached by iterating backwards from the last stage $T$: at $T$ the problem is trivial since there is no control input to optimize for
+\begin{equation*}
+  V_T(x_T) = g_T(x_T).
+\end{equation*}
+At time $T-1$, we need to minimize
+\begin{align*}
+  V_{T-1}(x_{T-1}) = \left\{
+  \begin{aligned}
+    \min_{u_{T-1}} &\ g_{T-1}(x_{T-1},u_{T-1}) + V_T(x_T) \\
+    \text{subject to } & x_T = f_{T-1}(x_{T-1},u_{T-1})
+  \end{aligned}
+    \right. \\
+  = \min_{u_{T-1}} g_{T-1}(x_{T-1},u_{T-1}) + V_T(f_{T-1}(x_{T-1},u_{T-1})
+\end{align*}
+and at a generic time $t$
+\begin{equation}
+  \label{eq:backward-induction}
+  V_t(x_t) = \min_{u_t} \left\{ g_t(x_t,u_t) + V_{t+1}(f_t(x_t,u_t)) \right\}.
+\end{equation}
+In other words, the problem is decomposed into stage problems that can be solved by backward induction.
+The problem is computationally easy to solve if
+\begin{itemize}
+\item the decisions space $\mathcal{U}$ is convex;
+\item $g_t(\cdot,u_t)$ is convex in $u_t$. Note that we do not request $g_t$ to be convex in $x_t$ because $x_t$ is a parameter of the problem;
+\item $V_{t+1}(f_t(\cdot,u_t))$ is convex in $u_t$. A sufficient condition is that $V_{t+1}$ is convex in $x_{t+1}$ and $f_t$ is convex in $u_t$.
+\end{itemize}
+In practice the problem is tractable only for quadratic cost $g$ and linear dynamics $f$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{LQR}
+\label{sec:lqr}
+
+LQR problems have quadratic cost functions\footnote{A more general quadratic cost includes the cross terms in $x$ and $u$
+\begin{equation*}
+  \begin{bmatrix}
+    x^\top & u^\top
+  \end{bmatrix}
+  \begin{bmatrix}
+    Q & N \\ N^\top & R
+  \end{bmatrix}
+  \begin{bmatrix}
+    x \\ u
+  \end{bmatrix} = x^\top Qx + u^\top Ru + 2x^\top N u.
+\end{equation*}
+This quadratic cost function can represent any linear feedback controller $u = -\bar{K}x$ when letting $Q = \bar{K}^\top \bar{K}$, $R = 1$ and $N = \bar{K}^\top$. To see why, we look for a controller $u=-Kx$ that minimizes the expression
+\begin{equation*}
+  x^\top Qx + u^\top Ru + 2x^\top N u = x^\top \left(\bar{K}^\top \bar{K} + K^\top K - 2 \bar{K}^\top K\right) x = x^\top \left(\bar{K}-K\right)^2x
+\end{equation*}
+this occurs at $K=\bar{K}$.} and linear dynamics
+\begin{equation}
+  \label{eq:LQR-formulation}
+  \begin{aligned}
+    \min_{\bsu} & \sum_{t=0}^{T-1} \left(x_t^\top Qx_t + x_t^\top Qx_t\right) + x_T^\top Sx_T,\quad Q,S \succeq 0,\ R \succ 0 \\
+    \text{subject to } & x_{t+1} = Ax_t + Bu_t.
+  \end{aligned}
+\end{equation}
+We impose a \emph{strictly} positive cost on the control inputs, $R\succ 0$ to reflect the case that is relevant in practice where there is a cost associated with actuating the system.
+
+\begin{proof}
+  The LQR can be solved analytically and the solution is of the form
+  \begin{equation}
+    \label{eq:LQR-generic-solution}
+    V_t(x) = x^\top P_tx,\quad P_t\succeq 0.
+  \end{equation}
+  We show this by induction starting from $t=T$ and recursing backwards.
+
+  The initial case is satisfied, because $V_T(x) = x^\top Sx$ is quadratic and $P_T = S$. At state $t$, assuming that $V_{t+1}(x) = x^\top P_{t+1} x$, we have $V_t(x) = \min_u J_t(x,u) = J_t(x,u^\star)$ where
+  \begin{align*}
+    J_t(x,u) &= x^\top Qx + u^\top Ru + V_{t+1}(Ax+Bu) \\
+             &= x^\top\left(Q + A^\top P_{t+1}A\right) x + u^\top\left(R + B^\top P_{t+1}B\right) u + 2u^\top B^\top P_{t+1}Ax.
+  \end{align*}
+  To find the minimum $u^\star$ we set its gradient to zero, $\nabla_{u} J(x,u) = 0$
+  \begin{align}
+    &\left(R + B^\top P_{t+1}B\right)u^\star + B^\top P_{t+1}A x = 0 \nonumber \\
+    \label{eq:LQR-optimal-control-input}
+    &\quad \rightarrow u^\star = -\underbrace{(R+B^\top P_{t+1}B)^{-1}B^\top P_{t+1}A}_{K_t}x.
+  \end{align}
+  This solution exists since $R+B^\top P_{t+1}B$ being a (strictly) positive $m\times m$ definite matrix can be inverted. We need to prove that $V_t(x)= x^\top P_t x$. We plug the optimal control $u^\star$ into the expression for $V_t(x)=J_t(x,u^\star)$ to obtain
+  \begin{align*}
+    V_t(x) &= x^\top \left(Q + A^\top P_{t+1}A\right) x - x^\top A^\top P_{t+1}B\left(R+B^\top P_{t+1}B\right)^{-1}B^\top P_{t+1}Ax
+  \end{align*}
+  where
+  \begin{equation}
+    \label{eq:solution-timedependent-ricatti}
+    P_t = Q + A^\top P_{t+1}A - A^\top P_{t+1}B\left(R+B^\top P_{t+1}B\right)^{-1}B^\top P_{t+1}A.
+  \end{equation}
+\end{proof}
+
+LQR finds an optimal control sequence $\bsu^\star = \{u_0^\star, u_1^\star,\ldots,u_{T-1}^\star\}$ computating by backward recursion the matrices $K_t$ using eq.~\eqref{eq:solution-timedependent-ricatti} and eq.~\eqref{eq:LQR-optimal-control-input} followed by forward integration of the system dynamics from the initial state $x_0$ to obtain the next state $x_t$ and the next control input $u_t^\star = -K_tx_t$.
+
+Note that the optimal control sequence is a feedback law, $u_t=-K_tx_t$. In case of state perturbation, the system evolves differently from the predicted state, but applying the input $u_t=-K_t\tilde{x}_t$ on the measured state $\tilde{x}_t$ guarantees optimality because by Bellman's principle, the computed sequence is optimal from any starting point and onwards. Contrast this with model mismatch: in this case the feedback law using $K_t$ is not optimal because it relies on the matrices $A$ and $B$ being an accurate representation of the system.
+
+\subsection{Infinite Horizon LQR}
+\label{sec:infinite-horizon-LQR}
+
+There are situations where one wants to maintain a stationary state. This is captured by making the horizon infinite,
+\begin{equation}
+  \label{eq:infinite-horizon-LQR-formulation}
+  \begin{aligned}
+    \min_{\bsu} &\sum_{t=0}^\infty \left(x_t^\top Qx_t + u_t^\top Ru_t \right),\quad Q\succeq 0, R\succ 0 \\
+    \text{subject to } &x_{t+1} = Ax_t + Bu_u,\quad x_0=X_0.
+  \end{aligned}
+\end{equation}
+so that the problem becomes time-invariant and only one feedback matrix $K_\infty$ is required.
+
+The convergence of eq.~\eqref{eq:infinite-horizon-LQR-formulation} is guaranteed by the following observation: if the system is stabilizable\footnote{A system is stabilizable if?}, there is an input sequence that yields a finite cost. To see why, let $u_t = -Kx_t$ a linear feedback such that $A-BK$ has eigenvalues inside the unit circle and $x_t=(A-BK)^tX_0$. The cost to go written as
+\begin{align*}
+  V(X_0) &= \sum_{t=0}^\infty x_t^\top Qx_t + x_t^\top K^\top RKx_t \\
+         &= X_0^\top \sum_{t=0}^\infty (A-BK)^{t\top}\left(Q+K^\top RK\right)(A-BK)^tX_0
+\end{align*}
+is a geometric converging series.
+
+Since the problem is time-invariant, the feedback law is computed by solving the corresponding ARE, where the subindex $t$ has been dropped from eq.~\eqref{eq:solution-timedependent-ricatti}
+\begin{equation*}
+  P = Q + A^\top P A - A^\top P B\left(R + B^\top PB\right)^{-1}B^\top P A
+\end{equation*}
+using \textit{e.g.} an ARE solver or analytically. Note that AREs have multiple solutions and for a controllable system, the \emph{optimal} solution is the matrix $P_\infty$ with the minimum cone. A solver will pick the correct solution. Alternatively, one can iterate eq.~\eqref{eq:solution-timedependent-ricatti} until convergence. It can be proven that the iteration converges to the solution with the smallest cone.
+
+The optimal $K_\infty$ may however not stabilize the system: stabilization happens if and only if all unstable modes are weighted in $Q$, \textit{i.e.} unstable modes must be observable\footnote{Stable modes that are not weighted by $Q$ are not a concern because they decay.}.
+
+\begin{theorem}
+  Let $Q = C C^\top$. The feedback $K_\infty$ stabilizes the system if and only if
+  \begin{equation*}
+    x_{t+1} = Ax_t,\quad y_t = C^\top x_t
+  \end{equation*}
+  does not have unobservable modes.
+\end{theorem}
+To see why this is correct, consider $||y_t||^2 = x_t^\top CC^\top x_t = x_t^\top Qx_t$. This is an artificial system whose norm of the output is the cost. And then?
+
+
+\subsection{Stability of the Optimal Controller}
+\label{sec:stability-optimal-controller}
+
+If the system has some unobservable states, the optimal control law $K_\infty$ does not stabilize the system, because optimality of the controller is with respect to the cost function. Consider the unstable system
+\begin{equation*}
+  x_{t+1} =
+  \begin{bmatrix}
+    2 & 0 \\ 0 & 3
+  \end{bmatrix}x_t + u_t, \quad Q =
+  \begin{bmatrix}
+    1 & 0 \\ 0 & 0
+  \end{bmatrix}, \quad R =
+  \begin{bmatrix}
+    1 & 0 \\ 0 & 1
+  \end{bmatrix},\quad u_t =-Kx_t
+\end{equation*}
+where the diagonal $A$ matrix has eigenvalues outside of the unit circle. The system can be controlled by an appropriate choice of $K$ but this does not give an optimal solution because acting on the second state incurs a cost, since $R_{22}\neq 0$. There is however no cost associated with letting the second state diverge because $Q_{22}=0$ and the optimal solution will yield zero control input of the second state.
+
+However, even if a mode is not stable and not weighted in the cost function, it can still be stabilized with a controller that is suboptimal, by solving the ARE and selecting the \emph{largest} cone solution $P_S$. It can be proven that
+\begin{itemize}
+\item there is at most one stabilizing solution $P_S$;
+\item of all solutions $P$ to the ARE, $P_S$ is the one with the largest cone;
+\item if $P_\infty$ is stabilizing, it is the only solution to the ARE;
+\item $P_S$ is the limit of the backward induction initialized at any $P_0\ne 0$;
+\item $P_S$ is the optimal \emph{stabilizing} feedback solution.
+\end{itemize}
+
+For the example above, the Ricatti equation gives a diagonal matrix whose entries and solutions are
+\begin{align*}
+  1 + 3p_1 - \frac{4p_1^2}{1+p_1} = 0\ &\rightarrow p_1 = 2\pm \sqrt{5} \\
+  8p_2 - \frac{9p_2^2}{1+p_2} = 0\ &\rightarrow p_2 = 0, 8
+\end{align*}
+and the optimal \emph{stabilizing} feedback solution is
+\begin{equation*}
+  P_S =
+  \begin{bmatrix}
+    2 + \sqrt{5} & 0 \\ 0 & 8
+  \end{bmatrix},\quad K_S =
+  2\begin{bmatrix}
+    \frac{2+\sqrt{5}}{3+\sqrt{5}} & 0 \\ 0 & \frac{4}{3}
+  \end{bmatrix}.
+\end{equation*}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "notes"
+%%% End:

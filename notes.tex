@@ -4,6 +4,7 @@
 %\usepackage{enumitem}
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage{amsthm}
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{biblatex}
@@ -12,8 +13,11 @@
 
 \newcommand{\du}{\ensuremath{\mathrm{d}}}
 \newcommand{\bs}[1]{\boldsymbol{#1}}
+\newcommand{\bsM}{\bs{\mathrm{M}}}
 \newcommand{\bsu}{\bs{\mathrm{u}}}
+\newcommand{\bsv}{\bs{\mathrm{v}}}
 \newcommand{\bsx}{\bs{\mathrm{x}}}
+\newcommand{\bsw}{\bs{\mathrm{w}}}
 
 \newtheorem{theorem}{Theorem}
 
@@ -24,119 +28,12 @@
 \tableofcontents
 
 %\setcounter{chapter}{1}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% \chapter{Dynamic Programming and LQR}
-% \label{sec:dynamic-programming-lqr}
 
-% Consider the translunar coast with the following performance metric:
-% minimization of fuel use, circumnavigation of the Moon, reenter Earth
-% by time $T$. We need to compute the sequence
-% $\bsu = u_0, u_1,u_u,\ldots$.
-
-% The optimization problem is
-% \begin{equation*}
-%   \min_{\bsu\in\mathcal{U}} J(\bsu)
-% \end{equation*}
-% where $\mathcal{U} = \tilde{\mathcal{U}} \times \{0,1,2,\ldots,T\}$
-% and the cost is $J(\bsu)$ that includes fuel cost $\bsu$ and terminal
-% constraint $\delta(\bsu)$ that is applied only at the final state
-% $x_T$
-% \begin{equation*}
-%   \delta(\bsu) =
-%   \begin{cases}
-%     0 & \text{ if } \\
-%     \infty & \text{ otherwise}
-%   \end{cases}
-% \end{equation*}
-
-% If the problem can be written in the form
-
-% \begin{align*}
-%   \min_{\bsx,\bsu} \sum_{t=0}^T g_t(x_t,u_t) \\
-% \end{align*}
-% then Bellman's principle can be used to solve the optimization
-% problem.
-
-% is in general an untractable optimization problem for the following
-% reasons:
-% \begin{itemize}
-% \item the dimension of the space $\mathcal{U}$ make the problem size
-%   formidable;
-% \item the cost function requires an accurate model of the system,
-%   which can be obtained by first-principle model, numerical simulation
-%   and black box/oracle for the terminal constraint;
-% \item the optimization problem is non-convex. In the case of the
-%   translunar coast, assume two control inputs that make the rocket
-%   orbit the moon once and twice respectively. A linear combination of
-%   these two trajectories may not make the rocket to Earth;
-% \item the open-loop nature of the optimal control problem makes it
-%   useless in the presence of disturbances and uncertainty.
-% \end{itemize}
-
-
-
-% Given the Markovian update
-% \begin{equation*}
-%   x_{t+1} = Ax_t + Bu_t
-% \end{equation*}
-% and the cost function
-% \begin{equation*}
-%   \sum_{t=0}^{T-1} \left(x_t^\top Qx_t + x_t^\top Qx_t\right) + x_T^\top Sx_T,\quad Q,S \succeq 0, R \succ 0
-% \end{equation*}
-% which has solution
-% \begin{equation}
-%   \label{eq:solution-timedependent-ricatti}
-%   P_t = Q + A^\top P_{t+1}A - A^\top P_{t+1}B\left(R+B^\top P_{t+1}B\right)^{-1}B^\top P_{t+1}A
-% \end{equation}
-
-% Infinite horizon algebraic Ricatti equations are solved by using a
-% solver that selects the solution with the \emph{largest} norm. They
-% can also inefficiently be computed by iterating $P_t$ backward. See
-% the example below.
-
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% \section{Stability of the Optimal Controller}
-% \label{sec:stability-optimal-controller}
-
-% Optimality of the controller is with respect to the cost function, but
-% the cost function may not make the system stable. Consider the example
-% \begin{equation*}
-%   x_{t+1} =
-%   \begin{bmatrix}
-%     2 & 0 \\ 0 & 3
-%   \end{bmatrix}x_t + u_t, \qquad Q =
-%   \begin{bmatrix}
-%     1 & 0 \\ 0 & 0
-%   \end{bmatrix}, \quad R =
-%   \begin{bmatrix}
-%     1 & 0 \\ 0 & 1
-%   \end{bmatrix}, \quad u_t = \Gamma_tx_t
-% \end{equation*}
-% The system has eigenvalues outside of the unit circle. The optimal
-% solution does not stabilize the system, since it must control the
-% second input for which there is a cost $R_{2,2}\neq 0$ but zero cost
-% to let the state diverge, $Q_{2,2}=0$.
-
-% Working through the Ricatti equation gives a diagonal matrix whose
-% entries and solutions are
-% \begin{align*}
-%   1 + 3p_1 - \frac{4p_1^2}{1+p_1} &\rightarrow 2\pm \sqrt{5} \\
-%   8p_2 - \frac{9p_2^2}{1+p_2} &\rightarrow 0, 8
-% \end{align*}
-% The stabilizing optimal solution (but clearly not the one with minimal
-% norm?) is
-% \begin{equation*}
-%   P =
-%   \begin{bmatrix}
-%     2 - \sqrt{5} & \\ 0 & 8
-%   \end{bmatrix}
-% \end{equation*}
-
+\include{lqr}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Optimal Control beyond LQR}
-\label{sec:optimal-control-beyond-lqr}
+\chapter{Model Predictive Control}
+\label{sec:MPC}
 
 Model Predictive Control (MPC) is a discrete process control where the control input $\bsu = \{u_0,u_1,\ldots,u_{K-1}\}$ and the states $\bsx = \{x_0,x_1,\ldots,x_{K-1},x_K\}$ must also satisfy a set of contraints:
 \begin{equation}
@@ -266,16 +163,13 @@ and therefore we have that
 \end{equation*}
 This poses the restriction than $g_k$ is a strictly positive quantity: if a state $\bs{\bar{x}}$ is not weighted in the cost function and $g_k(\bs{\bar{x}})=0$, then $W(x)$ defined above is not strictly decreasing and would not be a Lyapunov function for the asymptotic stability test.
 
-\textbf{The proof for the finite horizon relies on $g$ being independent of k: this was not the case for the infinite horizon. Saverio, can we discuss this?}
-
-For a finite receding MPC problem with horizon length $K$, the trick above does not apply because at $i+1$, the new cost to go includes the term $g_{K}()$ and excludes $g_k$
-\begin{align*}
-  V^K_{k+1}(\bsu,\bsx) &= \sum_{k=0}^{K-1}g(x_k,u_k) \\
-                       &= V_k(\bsu,\bsx) + g_{k+K+1}(x_{k+K+1},u_{k+K+1}) - g_k(x_k,u_k)
-\end{align*}
+For the finite receding MPC problem with horizon length $K$, we only consider the simpler problem of stability for a stage cost $g$ that is independent from the index $k$. The trick above does not apply because at $i+1$, the new cost to go includes the term $g(x_{i+K})$ and excludes $g(x_i)$
+\begin{equation*}
+  V^K_{i+1}(\bsu,\bsx) = \sum_{k=i+1}^{i+K}g(x_k,u_k) = V_i^K(\bsu,\bsx) + g(x_{i+K},u_{i+K}) - g_k(x_i,u_i)
+\end{equation*}
 and there is no guarantee that the requirement
 \begin{equation*}
-  \min_{\bsu,\bsx} V^K_{i+1} < \min_{\bsu',\bsx'} V^K_i
+  W(x_{i+1}) = \min_{\bsu,\bsx} V^K_{i+1}(\bsu,\bsx) < \min_{\bsu',\bsx'} V^K_i(\bsu',\bsx') = W(x_i)
 \end{equation*}
 is satisfied.
 
@@ -283,20 +177,20 @@ We can however construct a new optimization problem equal to the original one to
 \begin{equation}
   \label{eq:lyapunov-tracking-MPC}
   \begin{aligned}
-    W(x) \qquad\quad\equiv \min_{\bsu,\bsx} &\quad \sum_{k=0}^{K-1} g_k(x_k,u_k) \\
+    W(x) = \min_{\bsu,\bsx} &\quad \sum_{k=0}^{K-1} g_k(x_k,u_k) \\
     \text{subject to } &\quad x_{k+1} = f(x_k,u_k) \\
                                             &\quad  x_0 = x,\ x_K = 0
   \end{aligned}
 \end{equation}
-following the intuition that, because one is trying to stabilize the system, the final state will be close to zero. This is a Lyapunov function if we prove that this is a decreasing function along a trajectory.
+based on the intuition that the final state will be close to zero because one is trying to stabilize the system. This is a Lyapunov function if we prove that this is a decreasing function along a trajectory.
 
-Assume we found the optimal solution $\bsu_{k+1}^\star$ to the modified problem for $k+1$: this has a lower cost than the suboptimal solution $\bsu_{k+1}$ for step $k+1$ obtained by taking the optimal solution $\bsu_k^\star$ for step $k$, removing state $u_k$ and adding $u_{k+K+1} = 0$ such that $x_{k+K+1} = 0$. The suboptimal solution $\bsu_{k+1}$ conversely has a lower cost than the optimal solution $\bsu_k^\star$ because we have removed the cost $g_k(x,u_k)$:
+Assume we found the optimal solution $\bsu_{i+1}^\star$ to the modified problem for $i+1$: this has a lower cost than the suboptimal solution $\bsu_{i+1}$ obtained by taking the optimal solution $\bsu_i^\star$ for step $i$, removing state $u_i$ and adding $u_{i+K} = 0$ such that $x_{i+K} = 0$. The suboptimal solution $\bsu_{i+1}$ conversely has a lower cost than the optimal solution $\bsu_i^\star$ because we have removed the cost $g_k(x_i,u_i)$:
 \begin{align*}
-  W(x_{k+1}) &= V_{k+1}^K(\bsx_{k+1}^\star, \bsu_{k+1}^\star) & \text{definition of $W$} \\
-             & \leq V_{k+1}^K(\bsx_{k+1}, \bsu_{k+1}) & \text{definition of optimal trajectory} \\
-             & = \underbrace{V_k^K(\bsx_k^\star, \bsu_k^\star)}_{W(x_k)} - g_k(x_k^\star,u_k^\star) + \\
-             & \underbrace{g_{k+K+1}(x_{k+K+1},u_{k+K+1})}_{=0} & \text{definition of $V_k^K$} \\
-  & < W(x_k)
+  W(x_{i+1}) &= \\
+  & V_{i+1}^K(\bsx_{i+1}^\star, \bsu_{i+1}^\star) & \text{definition of $W$} \\
+             & \leq V_{i+1}^K(\bsx_{i+1}, \bsu_{i+1}) & \text{optimal trajectory} \\
+             & = \underbrace{V_i^K(\bsx_i^\star, \bsu_i^\star)}_{W(x_i)} - g(x_i^\star,u_i^\star) + \underbrace{g(x_{i+K},u_{i+K})}_{=0} & \text{definition of $V_i^K$} \\
+  & < W(x_i)
 \end{align*}
 This proves that $W$ is a decreasing function on a trajectory.
 
@@ -432,13 +326,20 @@ An integrator may already be present in the plant. For example in drug administr
 
 Many modern control problems present complex performance metrics, such as economic aspects, regulatory specifications and use of resources. Consider an iron furnace, where the inputs are its temperature, the inflow of iron ore, limestone and coke, and the air flow and the products includes the iron yield, its quality, the CO$_2$ emission and the amount of slag. The stage cost $\ell(x,u)$ represents economic losses, energy use, cost of materials, yield\ldots. $\ell$ is a continuous lower-bounded (otherwise the problem is not well defined) function.
 
-One approach is to split the problem into the offline computation of the steady-state computed from the economic cost to go
+One approach is to split the problem into the offline computation of the steady-state from the economic cost to go
 \begin{align*}
   \min_{x_s,u_s} &\ \ell(x_s,u_s) \\
   \text{subject to} &\ x_s = f(x_s,u_s) \\
                  & x\in \mathcal{X},\ u\in \mathcal{U}
 \end{align*}
-and an online MPC to track the steady state $(x_s,u_s)$, \textit{e.g.} the optimal furnace temperature, using a quadratic cost function $g_k(x_k-x_s,u_k-u_s)$. This two-stage approach is simpler to analyze but suffers from suboptimal cost of the system trajectory.
+and an online MPC to track the steady state $(x_s,u_s)$, \textit{e.g.} the optimal furnace temperature, using a quadratic cost function $g_k(x_k-x_s,u_k-u_s)$ with minimum at $(x_s,u_s)$
+\begin{align*}
+  \min_{\bsx,\bsu} & \sum_{k=0}^{K-1} g(x_k-x_s,u_k-u_s) \\
+  \text{subject to} &\ x_{k+1} = f(x_k,u_k) \\
+                   & x_0 = x,\ x_K=x_s \\
+                   & x_k\in \mathcal{X}_k,\ u_k\in \mathcal{U}_k
+\end{align*}
+This two-stage approach is simpler to analyze but suffers from suboptimal cost of the system trajectory.
 
 Economic MPC uses instead the loss function $\ell$ directly in the dynamic optimization problem
 \begin{align*}
@@ -457,7 +358,7 @@ To illustrate the situation, consider the furnace example above, starting from a
 
 The economic MPR is naturally an infinite horizon problem because we request long-term profits to be maximised. Moreover an optimal trajectory may not drive the system to a single point equilibrium but rather follow a semi-periodic trajectory. The boundedness is guaranteed by the constraint over the infinite trajectory because by construction, the controller produces an acceptable future trajectory. Such infinite horizon problem problems are computationally very hard.
 
-Solving the problem with a finite horizon is more tractable but because the system is not necessarily driven to equilibrium, we cannot assume that the tail, after the horizon $K$, is small as we did with MPC tracking, where $g$ at equilibrium is zero. Low cost trajectory may not approach equilibrium and unstable trajectory may emerge (cheap trajectory now, expensive to fix in the future). This is the reason why eMPC are solved by constraining the terminal state $x_K=x_s$.
+Solving the problem with a finite horizon is more tractable but because the system is not necessarily driven towards the equilibrium, we cannot assume that the tail, after the horizon $K$, is small as we did with tracking MPC. Instead low cost unstable trajectories may emerge (cheap trajectory now, expensive to fix in the future). This is the reason why eMPC are solved by constraining the terminal state $x_K=x_s$.
 
 Imposing $x_K=x_s$ induces a final stage cost $g_K(x_s)$ but ensures that the system is still operational at the end of the horizon and not in an unrecoverable state (unfeasible? high cost?). The increased terminal cost $g_K(x_K)$ affects minimally the closed-loop solution (but if it affects minimally, why adding it?).
 
@@ -469,7 +370,7 @@ In tracking MPC, the terminal constraint $x_K=0$ was essential in proving that e
   \label{eq:eMPC-Lyapunov-like-inequality}
   W(x_{i+1}) \le W(x_i) + \ell(x_s,u_s) - \ell(x_i,u_0^\star(x_i))
 \end{equation}
-is not in general smaller than $W(x_i)$ because to keep the system at steady-state, the cost may exceed the cost of the state after applying control input $u_0^\star(x)$. In contrast with tracking MPC where the stage cost $g_k$ had the property of being zero at the equilibrium point, in economic MPC, $\ell$ is not minimized at the steady state and stronger conditions are required to guarantee asymptotic stability. This is outside the scope of this introduction.
+is not in general smaller than $W(x_i)$: to keep the system at steady-state, the cost may exceed the cost of the state after applying control input $u_0^\star(x)$. In contrast with tracking MPC where the stage cost $g_k$ had the property of being zero at the equilibrium point, in economic MPC, $\ell$ is not minimized at the steady state and stronger conditions are required to guarantee asymptotic stability. This is outside the scope of this introduction.
 
 Since eMPC can generate periodic trajectories, are these trajectories better than tracking a point? The following theorem guarantees that trajectories created started from an arbitrary initial point are more efficient that tracking a steady-state provided the number of time steps $N$ is sufficiently large:
 \begin{theorem}
@@ -479,15 +380,130 @@ Since eMPC can generate periodic trajectories, are these trajectories better tha
     \limsup_{N\rightarrow \infty} \frac{1}{N} \sum_{k=0}^{N-1} \ell(x_k,u_k) \le \ell(x_s,u_s).
   \end{equation}
 \end{theorem}
-The proof relies on the identity eq.~\eqref{eq:eMPC-Lyapunov-like-inequality}, rewritten as
-\begin{equation*}
-  W(x_{i+1}) - W(x_i) \le \ell(x_s,u_s) - \ell(x_i,u_0^\star(x_i))
-\end{equation*}
-Summing the first $N$ terms of the series and dividing by $N$ gives
-\begin{equation*}
-  \frac{1}{N}\sum_{i=0}^{N-1} \left[W(x_{i+1}) - W(x_i)\right] = \underbrace{\frac{W(x_N) - W(x_0)}{N}}_{\rightarrow 0 \text{ when } N\rightarrow 0} \le \frac{1}{N}\sum_{i=0}^{N-1}  \left[\ell(x_s,u_s) - \ell(x_i,u_0^\star(x_i))\right]
-\end{equation*}
-since the quantity $W(x_N) - W(x_0)$ is bounded. After rearranging the terms, we obtain the expression eq.~\eqref{eq:eMPC-inequality-trajectory-steadystate}.
+\begin{proof}
+  The proof relies on the identity eq.~\eqref{eq:eMPC-Lyapunov-like-inequality}, rewritten as
+  \begin{equation*}
+    W(x_{i+1}) - W(x_i) \le \ell(x_s,u_s) - \ell(x_i,u_0^\star(x_i))
+  \end{equation*}
+  Summing the first $N$ terms of the series and dividing by $N$ gives
+  \begin{equation*}
+    \frac{1}{N}\sum_{i=0}^{N-1} \left[W(x_{i+1}) - W(x_i)\right] = \underbrace{\frac{W(x_N) - W(x_0)}{N}}_{\rightarrow 0 \text{ when } N\rightarrow 0} \le \frac{1}{N}\sum_{i=0}^{N-1}  \left[\ell(x_s,u_s) - \ell(x_i,u_0^\star(x_i))\right]
+  \end{equation*}
+  since the quantity $W(x_N) - W(x_0)$ is bounded. After rearranging the terms, we obtain the expression eq.~\eqref{eq:eMPC-inequality-trajectory-steadystate}.
+\end{proof}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \section{Robust MPC}
+% \label{sec:robust-MPC}
+
+
+% Prior information can be one of these
+% \begin{itemize}
+% \item finite disturbances $w_k\in \{w^0, w^1,\ldots, w^p \}$;
+% \item disturbance set $w_k\in \text{co}\{w^0, w^1,\ldots, w^p \}$;
+% \item probability distribution $w_k \approx \mathcal{W}$
+% \end{itemize}
+% Can be used this prior information? The first question is how to set up the costs. Nominal cost, look at the worst case, the expected cost is used if the probability distribution is available,\ldots
+
+% A trickier aspects is what to do with constraints. Future states are affected by
+
+% One approach is: no matter what happens, I need to satisfy constraints; constraints satisfaction with high probability;
+
+% bound on violation of constraints
+
+
+% \subsection{Linear Systems with Additive Disturbance}
+% \label{sec:linear-system-additive-disturbance}
+
+% Robust decision: worst case must satisfy
+% \begin{equation}
+%   \label{eq:minimization-additive-disturbance}
+%   \begin{aligned}
+%     \min_{\bsx,\bsu}\left[\max_{\bsw} \sum_{k=0}^{K-1} g_k(x_k,u_k) + G_K(x_K)\right]
+%   \end{aligned}
+% \end{equation}
+
+% Example of infeasible problem:
+% \begin{equation*}
+%   x_{k+1} = x_k + u_k + w_k,\quad |w_k| \le 0.5
+% \end{equation*}
+
+% The problem is clearly feasible by chosing $u_k = -x_k$. MPC does not solve the problem. What is MPC failing? Because MPC solves the problem in open-loop and feedback comes later, between the application of one control input and the following one where
+
+% MPC is an open-loop technique and we recover feedback by applying the first element, measuring the state and reapplying. MPC is fragile against disturbances.
+
+
+% True closed loop control comes from finding a policy $u_k=\pi_k(x_k)$
+
+% Optimizing in closed loop could we do it in LQR.
+
+% A special case is soft-contrained LQR
+
+% \begin{equation*}
+%   V(x) = \min_{\bsu} \max_{\bsw} x^\top Qx + u^\top R u - \gamma w^\top w
+% \end{equation*}
+
+% We solve the Isaac equation, the min max problem and the soft-constrained to find the optimal input $u_k^\star(x)$ and the optimal disturbance . Maximization gives
+% \begin{equation*}
+%   \hat{w}_k(x,u) = -(D^\top P_{k+1}D-\gamma^2I)^{-1}D^\top P_{k+1} (Ax+Bu) = \Lambda x + \Gamma u
+% \end{equation*}
+
+% the minimization is
+% \begin{equation*}
+%   x^\top ()
+% \end{equation*}
+
+% At the end LQR (normal, soft-constraint and ) is linear
+% \begin{equation*}
+%   u_0^\star(x) = -Kx_0
+% \end{equation*}
+
+% To summarize: closed-loop vs open-loop.
+
+% Open loop is wildly different
+
+% \subsection{Feedback MPC}
+% \label{sec:feedback-MPC}
+
+% Parametrize the feedback control law via a set of parameters $\bsv$ to find a control law $u_k(x) = \pi_k(x_k;\bsv)$
+
+% \begin{equation}
+%   \label{eq:feedback-MPC}
+%   \begin{aligned}
+%     \min
+%   \end{aligned}
+% \end{equation}
+
+% There is a spectrum of options parametrised by
+
+% Restrict the policies by restricting a set of functions
+% \begin{equation*}
+%   u_k(x_k) = \pi_k(x_k;\bsv) = \sum_{m=1}^M v_{km}\theta_m(x_k)
+% \end{equation*}
+
+
+% Take an affine control law $\pi_k(x_k;\bsv) = v_k + Lx_k$.
+
+% Not critical to select $L$ because there is still freedom in the control input $v_k$
+
+% In the case of example ref{} one can chose $L=-1$ such that $u_k=-x_k+v$
+
+% Optimize as a feedback on past disturbances
+% \begin{equation*}
+%   u_k = \sum_{i=0}^{k-1}
+% \end{equation*}
+% disturbance is not Markovian.
+
+% \begin{equation*}
+%   \begin{aligned}
+%     \min_{\bsx,\bsM,\bsx} \max_{\bsw} \sum x_k^\top Qx_k + u_k^\top Ru_k
+%   \end{aligned}
+% \end{equation*}
+
+% We could have done by setting L but then optimizing on both L and x makes the problem not-convex.
+
+% From computational complexity, how big is the space?
 
 A free to download book is at \cite{free-book-diehl}.
 
