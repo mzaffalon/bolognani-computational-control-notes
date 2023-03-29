@@ -1,0 +1,198 @@
+\chapter{Robust MPC}
+\label{sec:robust-MPC}
+
+MPC relies on a model of the system. However the model may not capture the system's dynamics for different reasons, \textit{e.g.}
+\begin{itemize}
+\item the true dynamics $x_{k+1} = f(x_k,u_k,w_k)$ contains exogenous (outside of the system and unknown) \emph{unknown} disturbances $w_k$;
+\item model mismatch: the system dynamics $x_{k+1} = f(x_k,u_k)$ is an approximation of the real system $x_{k+1} = \tilde{f}(x_k,u_k)$;
+\item missing dynamics $f_z$: the system is deterministic but the true Markovian state $[x,z]^\top$ and dynamics
+  \begin{equation*}
+    \begin{bmatrix}
+      x_{k+1} \\ z_{k+1}
+    \end{bmatrix} =
+    \begin{bmatrix}
+      f(x_k,u_k,z_k) \\ f_z(x_k,u_k,z_k)
+    \end{bmatrix}
+  \end{equation*}
+  are unknown\footnote{Not clear to me how this differs from the first point where $w_k$ is unknown};
+\item the system is a linear approximation $x_{k+1} = \tilde{A}x_k + \tilde{B}u_k$
+\item time-discretization, quantization, time-varying parameters
+\end{itemize}
+We have seen how feedback takes care to some extent of the disturbances. If prior information on the disturbances is available \textit{e.g.}
+\begin{itemize}
+\item a finite set of discrete disturbances $w_k\in \{w^0, w^1,\ldots, w^p \}$;
+\item the convex hull (the linear combination) of a finite disturbance set, defining a polytope $w_k\in \text{co}\{w^0, w^1,\ldots, w^p \}$;
+\item a probability distribution $w_k \approx \mathcal{W}$. It is rare to have a true probability distribution; rather one has knowledge of the past distribution.
+\end{itemize}
+can it be used in the computation of the optimal control? The scope of this lecture is to obtain a control input sequence that is \emph{robust} against disturbances. We will restrict ourselves to exogenous systems
+\begin{equation*}
+  x_{k+1} = f(x_k,u_k,w_k)
+\end{equation*}
+and assume a finite set of disturbances.
+
+To set up the optimization, cost function and constraints are to be considered. According to the problem to solve, the cost can be
+\begin{itemize}
+\item the nominal cost, the cost when the disturbance is zero;
+\item worst case cost;
+\item expected cost, the cost weighted by the probability distribution;
+\item cost for typical noise? (\textit{e.g.} 95\% of cases).
+\end{itemize}
+The second aspect is the constraints:
+\begin{itemize}
+\item guaranteed satisfaction of constraints: no matter what happens, satisfy the constraints (\textit{e.g.} a machine breaks outside constraints)
+\item constraint satisfaction with high probability (\textit{e.g.} it is OK if the temperature in the building is outside the optimal range 3\% of the time) and typically evaluated by doing a Monte Carlo simulation;
+\item bounds on constrained violation (\textit{e.g.} how much the system is allowed to violate the constraints to minimize the risk).
+\end{itemize}
+
+\section{Linear Systems with Additive Disturbance}
+\label{sec:linear-system-additive-disturbance}
+
+We consider in the following linear systems\footnote{It looks like that most of the discussion is also valid for a generic system dynamics $x_{k+1}=f_k(x_k,u_k,w_k)$.} with additive exogenous disturbances and worst case satisfaction of constraints
+\begin{equation}
+  \label{eq:minimization-additive-disturbance}
+  \begin{aligned}
+    \min_{\bsx,\bsu} & \left(\max_{\bsw} \sum_{k=0}^{K-1} g_k(x_k,u_k) + g_K(x_K)\right) \\
+    \text{subject to } & x_{k+1} = Ax_k + Bu_k+Dw_k \\
+                     & x_0 = x \\
+                     & x_k \in \mathcal{X},\ \forall w \in \mathbb{W} \\
+                     & u_k \in \mathcal{U}
+  \end{aligned}
+\end{equation}
+Here the minimization is performed on the worst possible set of disturbances as determined by $\max_{\bsw}$, while satisfying the constraints. In other words, we allow the disturbance to pick a value $w_k$ knowing the action $u_k$ in an adversary way.
+
+Standard MPC may not suffice to solve such problems. Consider the following example:
+\begin{equation}
+  \label{eq:rMPC-unfeasible-problem}
+  \begin{aligned}
+    \min_{\bsx,\bsu} & \max_{\bsw} \sum_{k=1}^{4} x_k^2+u_k^2 \\
+    \text{subject to } & x_{k+1} = x_k + u_k + w_k \\
+                     & |x_k| \le 1,\quad |w_k| \le 0.5
+  \end{aligned}
+\end{equation}
+The condition $|x_5| \le 1$ implies
+\begin{equation*}
+  -1\le x_0 + \sum_{k=1}^4 u_k + \sum_{k=1}^4 w_k \le +1.
+\end{equation*}
+When the disturbances are either $w_k=+0.5$ or $w_k=-0.5$ for all $k$:
+\begin{align*}
+  -3 \le x_0 + \sum_{k=1}^4 u_k \le -1 & \text{ when } w_k=+0.5 \\
+  +1 \le x_0 + \sum_{k=1}^4 u_k \le +3 & \text{ when } w_k=-0.5.
+\end{align*}
+no input $\bsu$ satisfies both inequalities. On the other hand, by choosing the closed loop control input $u_k = -x_k$, the dynamics becomes $x_{k+1}=w_k$ and the problem feasible (because $|x_k|\le 1,\ \forall k$), although possibly not optimal. Standard MPC fails by trying to solve this problem in open loop: it searches for a conservative control input $\bsu$ regardless of the specific disturbance $w_k$ and feedback is only added at a later stage by using the measured state as the initial state for the new optimization.
+
+\section{Robust Control Requires Closed Loop Optimization}
+\label{sec:closed-loop-robust-control}
+
+True closed loop control\footnote{There is a bit of overloading of the term ``closed loop'' when it comes to MPC: there is closed loop in the sense that the initial state comes from the measurements and true closed loop when the policy is a function of the state $u_k = \pi_k(x_k)$.} such as that implemented by LQR, requires finding a policy $u_k=\pi_k(x_k)$. Standard MPC is a proxy to finding the optimal control policy because it solves the optimization problems on the numbers $\bsu$.\footnote{This sentence needs some love.}
+
+Therefore we want an input policy for the closed loop optimal control
+\begin{equation*}
+  u_k = \pi_k(x_k)\quad k=0,1,\ldots, K-1
+\end{equation*}
+or equivalently a policy given the past disturbances
+\begin{equation*}
+  u_k = \theta_k(w_0,\ldots,w_{k-1})\quad k=0,1,\ldots, K-1
+\end{equation*}
+because the state is Markovian and by using the past disturbances, it is possible to reconstruct state $x_k$.
+
+\subsection{Soft-Contrained LQR}
+\label{sec:soft-contrained-lqr}
+
+Finding a robust optimal closed-loop control policy is often hard; the problem becomes tractable and even admits a closed form solution when the state update is linear and the cost quadratic. The soft-contrained LQR has the same cost as LQR
+\begin{equation*}
+  V(x) = \min_{\bsu} \left[\max_{\bsw} \sum_{k=0}^{K-1} x_k^\top Qx_k + u_k^\top R u_k - \gamma^2 w_k^\top w_k + x_K^\top Sx_K\right],\quad Q,S\succeq 0, R\succ 0
+\end{equation*}
+except for the additional negative cost $-\gamma^2 w_k^\top w_k$. This term works as a soft bound on the energy of the disturbance $w_k$ and is irrelevant in the minimization with respect to $u$ thereby not changing the optimal control input sequence. If $\gamma$ is sufficiently large, $\max_{\bsw}$ makes the problem concave and therefore solvable.
+
+The solution of this dynamic programming problem consists in assuming that $V_k(x) = x^\top P_kx$ is quadratic in $x$, as it was the case for LQR. The resulting Isaac equation is solved by dynamic programming in the same way as it was done for Bellman's equation
+\begin{equation*}
+  V_k(x) = \min_u \max_w x^\top Qx + u^\top Ru - \gamma^2 w^\top w + V_{k+1}(Ax+Bu+Dw)
+\end{equation*}
+and gives the optimal disturbance $w_k^\star(x)$ and the optimal input $u_k^\star(x)$. For the optimal disturbance, the maximization of the inner problem gives
+\begin{equation*}
+  \hat{w}_k(x,u) = -(D^\top P_{k+1}D-\gamma^2I)^{-1}D^\top P_{k+1} (Ax+Bu) := \Lambda x + \Gamma u
+\end{equation*}
+where $\hat{w}_k(x,u)$ is a maximum only if the Hessian is negative, that is when
+\begin{equation*}
+  \gamma^2 I > D^\top P_{k+1}D.
+\end{equation*}
+
+To compute the optimal control input, we assume that $u_k^\star(x)=Kx$; by plugging it into
+\begin{equation*}
+  w_k^\star(x,u) = \Lambda x + \Gamma u = \underbrace{(\Lambda + \Gamma H)}_{H}x
+\end{equation*}
+the cost-to-go has the form
+\begin{align*}
+  V_k(x) =& x^\top P_kx \\
+  =& x^\top\left(Q + K^\top RK -\gamma^2 H^\top H + (A+BK+DH)^\top P_{k+1}(A+BK+DH)\right)x
+\end{align*}
+from which we derive
+\begin{equation*}
+  K_k =
+\end{equation*}
+Similarly to the LQR case, the entire computation can be performed offline; the online part in a receding horizon scheme is $u_0^\star(x) = K_0x$.
+
+From the discussion, in the absence of disturbances, open and closed loop MPC give the same trajectory. In closed loop different disturbances will give different optimal control inputs whereas in open loop, the system will compute one optimal sequence $\bsu^\star$.
+
+\subsection{Feedback MPC}
+\label{sec:feedback-MPC}
+
+The soft-constrained LQR approach does not admit constraints. Feedback MPC reintroduces them while allowing one to optimize over policies $\pi_k(x)$ for true closed-loop feedback. The optimization over generic function $\pi_k(x)$ is difficult: the problem is rendered tractable by parametrizing the feedback control law $u_k(x) = \pi_k(x_k;\bsv)$ with a set of parameters $\bsv$ and to optimize over them
+\begin{equation}
+  \label{eq:feedback-MPC}
+  \begin{aligned}
+    \min_{\bsv,\bsx} \max_{\bsw} & \sum_{k=0}^{K-1} g_k(x_k,\pi_k(x_k,\bsv)) + g_K(x_K) \\
+    \text{subject to } & x_{k+1} = f(x_k,\pi_k(x_k,\bsv),w_k) \\
+                                 & x_0 = \mathrm{x} \\
+                                 & x_k \in \mathcal{X}_k\quad \forall \bsw \in \mathbb{W} \\
+                                 & \pi(x_k,\bsv) \in \mathcal{U}_k %\quad \forall \bsw \in \mathbb{W}.
+  \end{aligned}
+\end{equation}
+The choice of the parametrization can generate a spectrum of policies: for example choosing $u_k(x_k) = \pi_k(x_k,\bsv) = v_k$ with $\bsv\in \mathbb{R}^{K-1}$ amounts to an open loop policy. A closed loop is any function $u_k(x_k)=\pi_k(x_k)$ with $\bsv\in \mathbb{R}^\infty$: as seen earlier, this can be done only in special cases such as LQR. Between these two extremes, a common approach is to restrict the policies to the (linear) combination of a set of functions $\theta_m(x)$
+\begin{equation*}
+  u_k(x_k) = \pi_k(x_k;\bsv) = \sum_{m=1}^M v_{km}\theta_m(x_k),\quad \bsv\in \mathbb{R}^{KM}.
+\end{equation*}
+We consider here the affine control law $\pi_k(x_k;\bsv) = v_k + Lx_k$ where $L$ is given. The feedback system dynamics is determined by
+\begin{equation*}
+  x_{k+1} = Ax_k + B\underbrace{(v_k+Lx_k)}_{\pi_k(x_k,\bsv)} + Dw_k = (A+BL)x_k + Bv_k + Dw_k
+\end{equation*}
+and $v_k$ now appears as the effecting control input. With this affine policy, the sequence $\bsv^\star$ is the open-loop optimal policy and the feedback gain $L$ rejects the disturbances $\bsw$. In the case of example \ref{eq:rMPC-unfeasible-problem} the choice $L=-1$ yields the control input $u_k=-x_k+v_k$ and changes the system dynamics to $x_{k+1}=w_k$. It is however not critical to select $L$ because there is still the freedom in choosing the control input $v_k$.
+
+Note that in the absence of disturbances, there is no advantage in this parametrization because $v_k$ can include the term $Lx_k$ computed for the nominal system trajectory.
+
+
+% \subsection{Joint Optimization of $L$ and $v$}
+% \label{sec:joint-optimization-L-v}
+
+% An extension of the previous case is to optimize also $L_k$. The problem remains tractable if the control policies are written as a function of the past disturbances
+% \begin{equation*}
+%   u_k = \sum_{i=0}^{k-1} M_{ki}\bsw_i + v_k.
+% \end{equation*}
+% and the optimization is done on $\bsM$
+% \begin{equation*}
+%   \begin{aligned}
+%     \min_{\bsx,\bsM,\bsx} \max_{\bsw} \sum x_k^\top Qx_k + u_k^\top Ru_k
+%   \end{aligned}
+% \end{equation*}
+% We could have done by setting L but then optimizing on both L and x makes the problem not-convex.
+
+\subsection{Computational Complexity}
+\label{sec:computational-complexity-rMPC}
+
+The problem
+\begin{equation*}
+  \begin{aligned}
+    \min_{\bsv,\bsx} \max_{\bsw} & \sum_{k=0}^{K-1} x_k^\top Qx_k + \pi_k(x_k,\bsv)^\top R \pi_k(x_k,\bsv) + x_K^\top Sx_K\\
+    \text{subject to } & x_{k+1} = Ax_k + B\pi_k(x_k,\bsv) + dw_k \\
+                                 & x_0 = \textrm{x} \\
+                                 & x_k\in \mathcal{X}_k,\quad \forall \bsw\in \mathbb{W} \\
+                                 & \pi_k(x_k,\bsv)\in \mathcal{U}_k,\quad \forall \bsw\in \mathbb{W}
+  \end{aligned}
+\end{equation*}
+is a convex problem. It has computational complexity $n\times K\times W$, where $n$ is the dimension of the state, $K$ the time-horizon and $W$ the number of possible disturbances. If $\mathbb{W}$ is a polytope, $W$ is the number of vertices and is exponential in the dimensions of $w$ or, if $w$ is a random disturbance, $W$ could be the points from a Monte Carlo sampling.
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "notes"
+%%% End:
