@@ -1,0 +1,288 @@
+\chapter{System Identification}
+\label{sec:system-identification}
+
+LQR and MPC require a state space model of the system
+\begin{equation*}
+  x_{t+1} = f(x_t,u_t),\quad y_t = h(x_t,u_t).
+\end{equation*}
+Obtaining a model requires determining
+\begin{itemize}
+\item the Markovian state $x$, so that $x_{t+1}$ is determined by $x_t$ and $u_t$;
+\item the dynamics $f(x,u)$ of the system;
+\item the observation (?) function $h(x,u)$.
+\end{itemize}
+In the rest of this chapter we limit to the case of a noiseless linear time-invariant update and observation.
+
+State space representations are not unique: for instance under the invertible transformation $T$ such that $x=Tw$, the two systems are different
+\begin{equation*}
+  \begin{aligned}
+    x_{t+1} &= Ax_t + Bu_t \\
+    y_t &= Cx_t
+  \end{aligned}\quad \stackrel{x=Tw}{\longrightarrow}\quad
+  \begin{aligned}
+    w_{t+1} &= T^{-1}ATw_t + T^{-1}Bu_t \\
+    y_t &= CTw_t
+  \end{aligned}.
+\end{equation*}
+Nevertheless the input-ouput behaviour, the relation between the input $u$ and the output $y$, remains the same. This can be seen by checking that their response is the same for the same input, \textit{e.g.} an input response
+\begin{equation*}
+  u_u=e_k\delta_t\quad \delta_t =
+  \begin{cases}
+    1 & \text{ for } t=0 \\
+    0 & \text{ otherwise}
+  \end{cases}.
+\end{equation*}
+Assuming a system at rest, we have for the state $x$ the dynamics
+\begin{equation*}
+  x_0=0,\ x_1=Be_k,\ x_2=ABe_k,\ x_3=A^2Be_k,\ \ldots
+\end{equation*}
+whereas for $w$
+\begin{equation*}
+  w_0=0,\ w_1=T^{-1}Be_k,\ w_2=T^{-1}ABe_k,\ w_3=T^{-1}A^2Be_k,\ \ldots
+\end{equation*}
+and for both systems, the output $y_t$ is the same,
+\begin{equation*}
+  y_0=0,\ y_1=CBe_k,\ y_2=CABe_k,\ y_3=CA^2Be_k,\ \ldots
+\end{equation*}
+%Such a change of coordinates may simplify the description of the problem or facilitate the control.
+
+The sequence above is the response of the system to an impulse at the $k$ input. For a general system with $m$ inputs and $p$ outputs, the sequence of matrices describing the output of the system dynamics
+\begin{equation}
+  \label{eq:markov-parameters}
+  CB,\ CAB,\ CA^2B,\ \ldots,\ \in R^{p\times m}
+\end{equation}
+is called the \emph{Markov parameters}. The matrix element $\left[CA^tB\right]_{ij}$ represent the output $i$ to an unit impulse on the input $j$ after a time $t$.
+
+\subsection{Controllability and Observability}
+\label{sec:controllability-observability}
+
+Consider the problem of driving a system from $x_0=0$ to a desired $\bar{x}\in \mathbb{R}^n$. In one step, input $u_0$ will take the system to
+\begin{equation*}
+  x_1 = Bu_0
+\end{equation*}
+that is, to any state in the image of $B$. In two steps, a control sequence $\{u_0,u_1\}$ will drive the system to
+\begin{equation*}
+  x_2 = Bu_1 + ABu_0
+\end{equation*}
+and therefore to any state in the image of $\begin{bmatrix}B & AB\end{bmatrix}$. In $n$ steps, the system can be driven to any state in the image of the \emph{controllability matrix}
+\begin{equation}
+  \label{eq:controllability-matrix}
+  \mathcal{C} :=
+  \begin{bmatrix}
+    B & AB & A^2B & \ldots & A^{n-1}B
+  \end{bmatrix}.
+\end{equation}
+$\mathcal{C}$'s column space is also the largest space that can be reached by the system: the matrix $A^n$ for an additional step is linearly dependent on $I,A,\ldots, A^{n-1}$ by the Hamilton-Cayley theorem. In general $\mathcal{C}$'s column space does not span the whole space $\mathbb{R}^n$: this is the case only when $\mathcal{C}$'s rank is $n$.
+
+For a full rank controllability matrix, the desired state $\bar{x}$ can be reached in at most $n$ steps since
+\begin{equation*}
+  \bar{x} = \mathcal{C}
+  \begin{bmatrix}
+    u_{t-1} \\ u_{t-2} \\ \vdots \\ u_0
+  \end{bmatrix} = \mathcal{C} \bsu
+\end{equation*}
+by using the control input $\bsu = \mathcal{C}^{-1}\bar{x}$ when the input is scalar or by using the pseudoinverse $\bsu = \mathcal{C}^\dagger\bar{x}$ in the case of a MIMO system, where $\mathcal{C}$ is a fat matrix.
+
+Similarly, consider the problem of detecting the effect of an initial condition $x_0$ in the output of a system. At $t=0$, the output of the system is
+\begin{equation*}
+  y_0 = Cx_0
+\end{equation*}
+therefore any $x_0$ in $C$ kernel is non-observable. In one step, the output is
+\begin{equation*}
+  y_1 = CAx_0
+\end{equation*}
+and any $x_0$ in the kernel of $\begin{bmatrix} C \\ CA \end{bmatrix}$ is non-observable. In $n$ steps, any initial state in the kernel of the \emph{observability matrix}
+\begin{equation}
+  \label{eq:observability-matrix}
+  \mathcal{O} :=
+  \begin{bmatrix}
+    C \\ CA \\ CA^2 \\ \vdots \\ CA^{n-1}
+  \end{bmatrix}
+\end{equation}
+is non-observable. As for the controllability matrix, an additional step, $CA^n$ does not increase $\mathcal{C}$'s row rank because by the Cayley-Hamilton theorem, $A^n$ is a linear combination of $I, A,\ldots, A^{n-1}$.
+
+We can use the observability matrix to find the initial state $x_0$ given the output sequence $\bsy = \begin{bmatrix}
+    y_0 & y_1 & \ldots & y_{n-1}
+  \end{bmatrix}^\top$, since
+\begin{equation*}
+  \bsy = \mathcal{O}x_0.
+\end{equation*}
+Assuming $\mathcal{O}$ has rank full, if the system has only one output (\textit{i.e.} the matrix $C$ has only row), $\mathcal{O}$ is square and invertible and the initial state is found by $x_0 = \mathcal{O}^{-1}\bsy$; otherwise, in case of a multiple output system, $\mathcal{C}$ is thin and we need to use $\mathcal{O}$'s pseudoinverse, $x_0=\mathcal{O}^\dagger\bsy$.
+
+% Example: consider the system
+% \begin{equation*}
+%   y_t = a_1u_{t-1} + a_2u_{t-2} + a_3u_{t-3}
+% \end{equation*}
+% The minimal state representation is to use the state $x=\begin{bmatrix} u_{t-1} & u_{t-2} & u_{t-3} \end{bmatrix}^\top$ such that
+% \begin{equation*}
+%   x_{t+1} =
+%   \begin{bmatrix}
+%     0 & 0 & 0 \\
+%     1 & 0 & 0 \\
+%     0 & 1 & 0
+%   \end{bmatrix}x_t +
+%   \begin{bmatrix}
+%     1 \\ 0 \\ 0
+%   \end{bmatrix} u_t,\quad y_t =
+%   \begin{bmatrix}
+%     a_1 & a_2 & a_3
+%   \end{bmatrix}x_t
+% \end{equation*}
+% with the controllability matrix
+% \begin{equation*}
+%   \mathcal{C} =
+%   \begin{bmatrix}
+%     1 & 0 & 0 \\
+%     0 & 1 &
+%   \end{bmatrix}
+% \end{equation*}
+
+
+\subsection{System Identification from Data}
+\label{sec:ho-kalman-algorithm}
+
+We want to derive a state-space representation exclusively from input-output data. We restrict our attention to systems that are both controllable and observable, so that the relation between states and input/output signals is well-posed (?). This also excludes the case of states that have no effect on I/O (is this not the same as the statement before?) We also want the minimal realization, the minimum number of states relevant for the system.
+
+The Ho-Kalman algorithm allows one to derive a minimal realization of the system in the form of the matrices $A$, $B$, $C$ from inpulse response data. The algorithm consists of the following steps:
+\begin{enumerate}
+\item construct the Hankel matrix $\mathcal{H}$ from the Markov parameters;
+\item factorize $\mathcal{H}$ into the matrices $\mathcal{O}$ and $\mathcal{C}$;
+\item derive the realization of $A$, $B$, $C$.
+\end{enumerate}
+
+\subsubsection{Step 1: Construct $\mathcal{H}$}
+\label{sec:construct-Hankel}
+
+The impulse responses of the system are collected as Markov parameters eq.~\eqref{eq:markov-parameters}. The Hankel matrix is a banded matrix
+\begin{equation}
+  \label{eq:hankel-matrix-definition}
+  \mathcal{H} := \mathcal{O}\mathcal{C} =
+  \begin{bmatrix}
+    CB & CAB & CA^2 B & \ldots & CA^{n-1}B \\
+    CAB & CA^2B & \ldots & & CA^nB \\
+    CA^2B & \ddots & & & \ldots \\
+    \vdots & & & & \vdots \\
+    CA^{n-1}B & \ldots & & & CA^{2n-2}B
+  \end{bmatrix}
+\end{equation}
+with the Markov parameters along the diagonals. Only for SISO systems is each entry a scalar, for MIMO systems each entry has size larger than 1 (to specify how much, we should introduce the sizes for $B$ and $C$).
+
+We are seeking a minimal representation of a controllable and observable system. Since both $\mathcal{O}$ and $\mathcal{C}$ are full rank, so must $\mathcal{H}$. The rank $n$ is however unknown: the approach is to construct an extended Hankel matrix $\mathcal{H}_{k,\ell}\in \mathbb{R}^{k\times \ell}$ and choose $k$ and $\ell$ larger than the expected value $n$. In doing so, $\mathcal{H}_{k,\ell}$ will be singular. To determine $n$ we select the largest upper left square minor of $\mathcal{H}_{k,\ell}$ that is non-singular.
+
+This is better explained with an example: consider a frictionless cart
+\begin{equation*}
+  \begin{aligned}
+    v_{t+1} &= v_t + u_t \\
+    z_{t+1} &= z_t + v_t \\
+    y_t &= z_t
+  \end{aligned}
+\end{equation*}
+subjected to an impulse response $u_t=\delta_t$. The time evolution is
+\begin{equation*}
+  \begin{matrix}
+    v_0 = 0, & z_0 = y_0 = 0 \\
+    v_1 = 1, & z_1 = y_1 = 0 \\
+    v_2 = 1, & z_2 = y_2 = 1 \\
+    v_3 = 1, & z_3 = y_3 = 2 \\
+    \ldots & \ldots
+  \end{matrix}
+\end{equation*}
+Let us arbitrarily pick $k=4$ and $\ell=5$. The corresponding extended Hankel matrix is the matrix whose rows are the system output, each row shifted to the left:
+\begin{equation*}
+  \mathcal{H}_{4,5} =
+  \begin{bmatrix}
+    0 & 1 & 2 & 3 & 4 & 5 \\
+    1 & 2 & 3 & 4 & 5 & 6 \\
+    2 & 3 & 4 & 5 & 6 & 7 \\
+    3 & 4 & 5 & 6 & 7 & 8
+  \end{bmatrix}.
+\end{equation*}
+Except for the first one, all the top left minors have rank 2 and the rank does not increase if more rows or columns are added. A rank of 2 is to be expected because the system is 2-dimensional.
+
+The computation of the rank is however not sufficiently robust against perturbation of the coefficients: the next section presents a better approach.
+
+
+% The recipe is to build an extended Hankel matrix of size $k\times \ell$, where $k,\ell $ are larger than $n$
+% \begin{equation*}
+%   \mathcal{H}_{k,\ell} =
+%   \begin{bmatrix}
+%     G_1 & G_2 & \ldots & G_\ell \\
+%     G_2 & G_3 & \ldots & G_{\ell+1} \\
+%     G_3 & \ddots & & \vdots \\
+%     \vdots \\
+%     G_k & G_{k+1} & \ldots & G_{k+\ell+1}
+%   \end{bmatrix}
+% \end{equation*}
+% and cut it if necessary.
+
+\subsubsection{Step 2: Factorize $\mathcal{H}$}
+\label{sec:factorize-Hankel}
+
+Factorize $\mathcal{H}_{k,\ell}$ as the product of two matrices $\mathcal{O}_k$ and $\mathcal{C}_\ell$
+\begin{equation}
+  \label{eq:extended-observability-controllability-matrices}
+  \mathcal{O}_k =
+  \begin{bmatrix}
+    C \\ CA \\ \vdots \\ CA^{k-1}
+  \end{bmatrix},\qquad \mathcal{C}_\ell =
+  \begin{bmatrix}
+    B & AB & \ldots & A^{\ell-1}B
+  \end{bmatrix}.
+\end{equation}
+The factorization is not unique and different factorizations give different space state representations of the system, all sharing the same input-output response. Indeed consider a change of basis $\tilde{A} = T^{-1}AT$, $\tilde{B} = T^{-1}B$ and $\tilde{C} = CT$. The observability matrix changes as
+\begin{equation*}
+  \tilde{\mathcal{O}} =
+  \begin{bmatrix}
+    \tilde{C} \\ \tilde{C}\tilde{A} \\ \vdots
+  \end{bmatrix} =
+  \begin{bmatrix}
+    CT \\ CTT^{-1}AT \\ \vdots
+  \end{bmatrix} = \mathcal{O}T
+\end{equation*}
+whereas the controllability matrix changes as $\tilde{\mathcal{C}} = T^{-1}\mathcal{C}$ but the product $\tilde{\mathcal{O}}\tilde{\mathcal{C}} = \mathcal{O}\mathcal{C}$ remains the same.
+
+SVD factorization is a computationally fast and robust method to obtain the decomposition of the matrix $\mathcal{H}_{k,\ell} = U \Sigma V^\top$
+\begin{align*}
+  \mathcal{H}_{k,\ell} &=
+                \begin{bmatrix}
+                  U_1 & U_2
+                \end{bmatrix}
+                \begin{bmatrix}
+                  \Sigma_1 & 0_{n \times (\ell-n)} \\
+                  0_{(k-n)\times n} & 0_{(k-n)\times (\ell-n)}
+                \end{bmatrix}
+                \begin{bmatrix}
+                  V_1 & V_2
+                \end{bmatrix}^\top = U_1 \Sigma_1 V_1^\top.
+\end{align*}
+where the dimension $n$ of the diagonal matrix $\Sigma_1$ is the rank of $\mathcal{H}_{k,\ell}$ and the size of the state space. The remaining elements of $\Sigma$ are zero, because increasing $k$ and $\ell$ does not increase $\mathcal{H}_{k,\ell}$ rank.
+
+A balanced factorization is
+\begin{equation*}
+  \mathcal{H}_{k,\ell} = \underbrace{U_1\sqrt{\Sigma_1}}_{\mathcal{O}_k} \underbrace{\sqrt{\Sigma_1}V_1^\top}_{\mathcal{C}_\ell}.
+\end{equation*}
+
+\subsubsection{Step 3: Obtain the Realization $A$, $B$, $C$}
+\label{sec:obtain-system-realization}
+
+$C$ and $B$ are the first entries in $\mathcal{O}_k$ and $\mathcal{C}_\ell$, eq.~\eqref{eq:extended-observability-controllability-matrices}. $A$ can be obtained from the shifted Hankel matrix, obtained discaring the first column of $\mathcal{H}_{k,\ell}$ and adding the subsequent Markov parameters as the last column
+\begin{align*}
+  \mathcal{H}_{k,\ell}^\uparrow :=
+  \begin{bmatrix}
+    CAB & CA^2B & CA^3 B & \ldots & CA^\ell B \\
+    CA^2B & CA^2B & \ldots & & CA^{\ell+1}B \\
+    CA^3B & \ddots & & & \ldots \\
+    \vdots & & & & \vdots \\
+    CA^kB & \ldots & & & \ldots
+  \end{bmatrix} = \mathcal{O}_k A \mathcal{C}_\ell.
+\end{align*}
+Then $A$ becomes
+\begin{equation*}
+  A = \mathcal{O}_k^\dagger\mathcal{H}_{k,\ell}^\uparrow \mathcal{C}_\ell^\dagger.
+\end{equation*}
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "notes"
+%%% End:
