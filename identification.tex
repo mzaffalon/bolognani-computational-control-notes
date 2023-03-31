@@ -24,7 +24,7 @@ State space representations are not unique: for instance under the invertible tr
     y_t &= CTw_t
   \end{aligned}.
 \end{equation*}
-Nevertheless the input-ouput behaviour, the relation between the input $u$ and the output $y$, remains the same. This can be seen by checking that their response is the same for the same input, \textit{e.g.} an input response
+Nevertheless the input-output behavior, the relation between the input $u$ and the output $y$, remains the same. This can be seen by checking that their response is the same for the same input, \textit{e.g.} an input response
 \begin{equation*}
   u_u=e_k\delta_t\quad \delta_t =
   \begin{cases}
@@ -72,7 +72,7 @@ and therefore to any state in the image of $\begin{bmatrix}B & AB\end{bmatrix}$.
     B & AB & A^2B & \ldots & A^{n-1}B
   \end{bmatrix}.
 \end{equation}
-$\mathcal{C}$'s column space is also the largest space that can be reached by the system: the matrix $A^n$ for an additional step is linearly dependent on $I,A,\ldots, A^{n-1}$ by the Hamilton-Cayley theorem. In general $\mathcal{C}$'s column space does not span the whole space $\mathbb{R}^n$: this is the case only when $\mathcal{C}$'s rank is $n$.
+$\mathcal{C}$'s column space is also the largest space that can be reached by the system: the matrix $A^n$ for an additional step is linearly dependent on $I,A,\ldots, A^{n-1}$ by the Cayley-Hamilton theorem. In general $\mathcal{C}$'s column space does not span the whole space $\mathbb{R}^n$: this is the case only when $\mathcal{C}$'s rank is $n$.
 
 For a full rank controllability matrix, the desired state $\bar{x}$ can be reached in at most $n$ steps since
 \begin{equation*}
@@ -143,7 +143,7 @@ Assuming $\mathcal{O}$ has rank full, if the system has only one output (\textit
 
 We want to derive a state-space representation exclusively from input-output data. We restrict our attention to systems that are both controllable and observable, so that the relation between states and input/output signals is well-posed (?). This also excludes the case of states that have no effect on I/O (is this not the same as the statement before?) We also want the minimal realization, the minimum number of states relevant for the system.
 
-The Ho-Kalman algorithm allows one to derive a minimal realization of the system in the form of the matrices $A$, $B$, $C$ from inpulse response data. The algorithm consists of the following steps:
+The Ho-Kalman algorithm allows one to derive a minimal realization of the system in the form of the matrices $A$, $B$, $C$ from impulse response data. The algorithm consists of the following steps:
 \begin{enumerate}
 \item construct the Hankel matrix $\mathcal{H}$ from the Markov parameters;
 \item factorize $\mathcal{H}$ into the matrices $\mathcal{O}$ and $\mathcal{C}$;
@@ -175,7 +175,20 @@ This is better explained with an example: consider a frictionless cart
     v_{t+1} &= v_t + u_t \\
     z_{t+1} &= z_t + v_t \\
     y_t &= z_t
-  \end{aligned}
+  \end{aligned} \longrightarrow
+  x_t =
+  \begin{bmatrix}
+    v_t \\ z_t
+  \end{bmatrix}\quad A =
+    \begin{bmatrix}
+      1 & 0 \\ 1 & 1
+    \end{bmatrix}\quad B =
+    \begin{bmatrix}
+      1 \\ 0
+    \end{bmatrix}\quad C =
+    \begin{bmatrix}
+      0 & 1
+    \end{bmatrix}
 \end{equation*}
 subjected to an impulse response $u_t=\delta_t$. The time evolution is
 \begin{equation*}
@@ -187,9 +200,15 @@ subjected to an impulse response $u_t=\delta_t$. The time evolution is
     \ldots & \ldots
   \end{matrix}
 \end{equation*}
-Let us arbitrarily pick $k=4$ and $\ell=5$. The corresponding extended Hankel matrix is the matrix whose rows are the system output, each row shifted to the left:
+Let us arbitrarily pick $k=4$ and $\ell=6$. The corresponding extended Hankel matrix is the matrix whose rows are the system output, each row shifted to the left:
 \begin{equation*}
-  \mathcal{H}_{4,5} =
+  \mathcal{H}_{4,6} =
+  \begin{bmatrix}
+    y_0 & y_1 & y_2 & y_3 & y_4 & y_5 \\
+    y_1 & y_2 & y_3 & \ldots & & \\
+    y_2 & y_3 & \ldots & & & \\
+    y_3 & \ldots & & & & y_8
+  \end{bmatrix} =
   \begin{bmatrix}
     0 & 1 & 2 & 3 & 4 & 5 \\
     1 & 2 & 3 & 4 & 5 & 6 \\
@@ -197,7 +216,18 @@ Let us arbitrarily pick $k=4$ and $\ell=5$. The corresponding extended Hankel ma
     3 & 4 & 5 & 6 & 7 & 8
   \end{bmatrix}.
 \end{equation*}
-Except for the first one, all the top left minors have rank 2 and the rank does not increase if more rows or columns are added. A rank of 2 is to be expected because the system is 2-dimensional.
+The $1\times 1$ top left submatrix
+\begin{equation*}
+  \begin{bmatrix} 0\end{bmatrix}
+\end{equation*}
+has rank zero, the $2\times 2$ top left submatrix
+\begin{equation*}
+  \begin{bmatrix}
+    0 & 1 \\
+    1 & 2
+  \end{bmatrix}
+\end{equation*}
+has rank 2 and so have the other square top left submatrices: the rank does not increase if more rows or columns are added. A maximum rank of 2 is to be expected because the system is 2-dimensional.
 
 The computation of the rank is however not sufficiently robust against perturbation of the coefficients: the next section presents a better approach.
 
@@ -241,7 +271,7 @@ The factorization is not unique and different factorizations give different spac
 \end{equation*}
 whereas the controllability matrix changes as $\tilde{\mathcal{C}} = T^{-1}\mathcal{C}$ but the product $\tilde{\mathcal{O}}\tilde{\mathcal{C}} = \mathcal{O}\mathcal{C}$ remains the same.
 
-SVD factorization is a computationally fast and robust method to obtain the decomposition of the matrix $\mathcal{H}_{k,\ell} = U \Sigma V^\top$
+SVD is a computationally fast and robust method to obtain the decomposition of the matrix $\mathcal{H}_{k,\ell} = U \Sigma V^\top$
 \begin{align*}
   \mathcal{H}_{k,\ell} &=
                 \begin{bmatrix}
@@ -262,17 +292,42 @@ A balanced factorization is
   \mathcal{H}_{k,\ell} = \underbrace{U_1\sqrt{\Sigma_1}}_{\mathcal{O}_k} \underbrace{\sqrt{\Sigma_1}V_1^\top}_{\mathcal{C}_\ell}.
 \end{equation*}
 
+For the frictionless cart
+\begin{equation*}
+  \Sigma =
+  %\begin{bmatrix}
+  %  \sqrt{242 + 4\sqrt{3529}} \\ \sqrt{242- 4\sqrt{3529}} \\ 0 \\ 0
+  %\end{bmatrix} =
+  \begin{bmatrix}
+    21.90 \\ 2.092 \\ 0 \\ 0 \end{bmatrix}
+\end{equation*}
+and the decomposition gives
+\begin{align*}
+  \mathcal{O}_k &=
+  \begin{bmatrix}
+    -1.547 &  -1.112 \\
+    -2.033 & -0.4826 \\
+    -2.519 &  0.1467 \\
+    -3.005 &  0.7759 \\
+  \end{bmatrix} \\
+  \mathcal{C}_\ell &=
+  \begin{bmatrix}
+    -0.7345 & -1.150 & -1.566 & -1.982 & -2.397 & -2.813 \\
+    1.022 & 0.7010 & 0.3800 & 0.0589 & -0.2621 & -0.583
+  \end{bmatrix}.
+\end{align*}
+
 \subsubsection{Step 3: Obtain the Realization $A$, $B$, $C$}
 \label{sec:obtain-system-realization}
 
-$C$ and $B$ are the first entries in $\mathcal{O}_k$ and $\mathcal{C}_\ell$, eq.~\eqref{eq:extended-observability-controllability-matrices}. $A$ can be obtained from the shifted Hankel matrix, obtained discaring the first column of $\mathcal{H}_{k,\ell}$ and adding the subsequent Markov parameters as the last column
+$C$ and $B$ are the first entries in $\mathcal{O}_k$ and $\mathcal{C}_\ell$, eq.~\eqref{eq:extended-observability-controllability-matrices}. $A$ can be obtained from the shifted Hankel matrix, obtained discarding the first column of $\mathcal{H}_{k,\ell}$ and adding the subsequent Markov parameters as the last column (or alternatively, discarding the first row and adding the subsequent Markov parameters as the last row)
 \begin{align*}
   \mathcal{H}_{k,\ell}^\uparrow :=
   \begin{bmatrix}
     CAB & CA^2B & CA^3 B & \ldots & CA^\ell B \\
     CA^2B & CA^2B & \ldots & & CA^{\ell+1}B \\
     CA^3B & \ddots & & & \ldots \\
-    \vdots & & & & \vdots \\
+    \vdots \\
     CA^kB & \ldots & & & \ldots
   \end{bmatrix} = \mathcal{O}_k A \mathcal{C}_\ell.
 \end{align*}
@@ -281,6 +336,24 @@ Then $A$ becomes
   A = \mathcal{O}_k^\dagger\mathcal{H}_{k,\ell}^\uparrow \mathcal{C}_\ell^\dagger.
 \end{equation*}
 
+For the frictionless cart, we obtain
+\begin{equation*}
+  A =
+  \begin{bmatrix}
+    1.202 & -0.2616 \\
+    0.156 &  0.7980
+  \end{bmatrix},\quad B =
+  \begin{bmatrix}
+    -0.7345 \\
+    1.0220
+  \end{bmatrix},\quad C =
+  \begin{bmatrix}
+    -1.5470 & -1.1118
+  \end{bmatrix}
+\end{equation*}
+The Ho-Kalman algorithm gives a different representation of the matrices $A$, $B$ and $C$\footnote{There is a coordinate transformation $T$ which I cannot find: $A$ is defective: should I be using the Jordan form?} but the same observed dynamics.
+
+Note also that the frictionless cart is only marginally stable as $A$'s eigenvalues are both 1. The approach can be also for unstable systems provided the experiment is stopped before the system becomes irrecoverable. Otherwise, system identification on unstable systems must be performed with feedback stabilization, which is outside this introduction.
 
 %%% Local Variables:
 %%% mode: latex
