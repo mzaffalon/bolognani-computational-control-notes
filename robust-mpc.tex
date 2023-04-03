@@ -52,9 +52,9 @@ We consider in the following linear systems\footnote{It looks like that most of 
   \label{eq:minimization-additive-disturbance}
   \begin{aligned}
     \min_{\bsx,\bsu} & \left(\max_{\bsw} \sum_{k=0}^{K-1} g_k(x_k,u_k) + g_K(x_K)\right) \\
-    \text{subject to } & x_{k+1} = Ax_k + Bu_k+Dw_k \\
+    \text{subject to } & x_{k+1} = Ax_k + Bu_k + Dw_k \\
                      & x_0 = x \\
-                     & x_k \in \mathcal{X},\ \forall w \in \mathbb{W} \\
+                     & x_k \in \mathcal{X}\quad \forall w \in \mathbb{W} \\
                      & u_k \in \mathcal{U}
   \end{aligned}
 \end{equation}
@@ -78,7 +78,7 @@ When the disturbances are either $w_k=+0.5$ or $w_k=-0.5$ for all $k$:
   -3 \le x_0 + \sum_{k=1}^4 u_k \le -1 & \text{ when } w_k=+0.5 \\
   +1 \le x_0 + \sum_{k=1}^4 u_k \le +3 & \text{ when } w_k=-0.5.
 \end{align*}
-no input $\bsu$ satisfies both inequalities. On the other hand, by choosing the closed loop control input $u_k = -x_k$, the dynamics becomes $x_{k+1}=w_k$ and the problem feasible (because $|x_k|\le 1,\ \forall k$), although possibly not optimal. Standard MPC fails by trying to solve this problem in open loop: it searches for a conservative control input $\bsu$ regardless of the specific disturbance $w_k$ and feedback is only added at a later stage by using the measured state as the initial state for the new optimization.
+no input $\bsu$ satisfies both inequalities. On the other hand, by choosing the closed loop control input $u_k = -x_k$, the dynamics becomes $x_{k+1}=w_k$ and the problem is feasible (because $|x_k|\le 1,\ \forall k$), although possibly not optimal. Standard MPC fails by trying to solve this problem in open loop: it searches for a conservative control input $\bsu$ that works for \emph{all} disturbances and feedback is only added at a later stage by using the measured state as the initial state for the new optimization.
 
 \section{Robust Control Requires Closed Loop Optimization}
 \label{sec:closed-loop-robust-control}
@@ -104,7 +104,7 @@ Finding a robust optimal closed-loop control policy is often hard; the problem b
 \end{equation*}
 except for the additional negative cost $-\gamma^2 w_k^\top w_k$. This term works as a soft bound on the energy of the disturbance $w_k$ and is irrelevant in the minimization with respect to $u$ thereby not changing the optimal control input sequence. If $\gamma$ is sufficiently large, $\max_{\bsw}$ makes the problem concave and therefore solvable.
 
-The solution of this dynamic programming problem consists in assuming that $V_k(x) = x^\top P_kx$ is quadratic in $x$, as it was the case for LQR. The resulting Isaac equation is solved by dynamic programming in the same way as it was done for Bellman's equation
+The solution of this dynamic programming problem consists in assuming that $V_k(x) = x^\top P_kx$ is quadratic in $x$, as it was the case for LQR. The resulting Isaac equation is solved by dynamic programming by induction in the same way as it was done for Bellman's equation
 \begin{equation*}
   V_k(x) = \min_u \max_w x^\top Qx + u^\top Ru - \gamma^2 w^\top w + V_{k+1}(Ax+Bu+Dw)
 \end{equation*}
@@ -112,7 +112,7 @@ and gives the optimal disturbance $w_k^\star(x)$ and the optimal input $u_k^\sta
 \begin{equation*}
   \hat{w}_k(x,u) = -(D^\top P_{k+1}D-\gamma^2I)^{-1}D^\top P_{k+1} (Ax+Bu) := \Lambda x + \Gamma u
 \end{equation*}
-where $\hat{w}_k(x,u)$ is a maximum only if the Hessian is negative, that is when
+where $\hat{w}_k(x,u)$ is a maximum only if the Hessian is negative\footnote{This inequality makes little sense for matrices.}, that is when
 \begin{equation*}
   \gamma^2 I > D^\top P_{k+1}D.
 \end{equation*}
@@ -121,11 +121,10 @@ To compute the optimal control input, we assume that $u_k^\star(x)=Kx$; by plugg
 \begin{equation*}
   w_k^\star(x,u) = \Lambda x + \Gamma u = \underbrace{(\Lambda + \Gamma H)}_{H}x
 \end{equation*}
-the cost-to-go has the form
-\begin{align*}
-  V_k(x) =& x^\top P_kx \\
-  =& x^\top\left(Q + K^\top RK -\gamma^2 H^\top H + (A+BK+DH)^\top P_{k+1}(A+BK+DH)\right)x
-\end{align*}
+the cost-to-go has indeed the form $V_k(x) = x^\top P_kx$ with
+\begin{equation*}
+  P_k = Q + K^\top RK -\gamma^2 H^\top H + (A+BK+DH)^\top P_{k+1}(A+BK+DH)
+\end{equation*}
 from which we derive
 \begin{equation*}
   K_k =
@@ -137,7 +136,7 @@ From the discussion, in the absence of disturbances, open and closed loop MPC gi
 \subsection{Feedback MPC}
 \label{sec:feedback-MPC}
 
-The soft-constrained LQR approach does not admit constraints. Feedback MPC reintroduces them while allowing one to optimize over policies $\pi_k(x)$ for true closed-loop feedback. The optimization over generic function $\pi_k(x)$ is difficult: the problem is rendered tractable by parametrizing the feedback control law $u_k(x) = \pi_k(x_k;\bsv)$ with a set of parameters $\bsv$ and to optimize over them
+The soft-constrained LQR approach does not admit constraints. Feedback MPC reintroduces them while allowing one to optimize over policies $\pi_k(x)$ for true closed-loop feedback. The optimization over generic function $\pi_k(x)$ is difficult: the problem is rendered tractable by parametrizing the feedback control law $u_k(x) = \pi_k(x_k;\bsv)$ with the parameters $\bsv$ and to optimize over them
 \begin{equation}
   \label{eq:feedback-MPC}
   \begin{aligned}
@@ -156,25 +155,34 @@ We consider here the affine control law $\pi_k(x_k;\bsv) = v_k + Lx_k$ where $L$
 \begin{equation*}
   x_{k+1} = Ax_k + B\underbrace{(v_k+Lx_k)}_{\pi_k(x_k,\bsv)} + Dw_k = (A+BL)x_k + Bv_k + Dw_k
 \end{equation*}
-and $v_k$ now appears as the effecting control input. With this affine policy, the sequence $\bsv^\star$ is the open-loop optimal policy and the feedback gain $L$ rejects the disturbances $\bsw$. In the case of example \ref{eq:rMPC-unfeasible-problem} the choice $L=-1$ yields the control input $u_k=-x_k+v_k$ and changes the system dynamics to $x_{k+1}=w_k$. It is however not critical to select $L$ because there is still the freedom in choosing the control input $v_k$.
+where $v_k$ now appears as the effecting control input. With this affine policy, the sequence $\bsv^\star$ is the open-loop optimal policy and the feedback gain $L$ rejects the disturbances $\bsw$. In the case of example \ref{eq:rMPC-unfeasible-problem} the choice $L=-1$ yields the control input $u_k=-x_k+v_k$ and changes the system dynamics to $x_{k+1}=w_k$. It is however not critical to select $L$ because there is still the freedom in choosing the control input $v_k$.
 
 Note that in the absence of disturbances, there is no advantage in this parametrization because $v_k$ can include the term $Lx_k$ computed for the nominal system trajectory.
 
+\subsection{Joint Optimization of $L$ and $v$}
+\label{sec:joint-optimization-L-v}
 
-% \subsection{Joint Optimization of $L$ and $v$}
-% \label{sec:joint-optimization-L-v}
+An extension of the previous case is to optimize also $L_k$. The naive optimization using $u_k=L_k x_k+v_k$ renders the optimization non-convex. The problem remains convex if the control policies are expressed as a function of the \emph{past} disturbances $w_i,\ i<k$
+\begin{equation*}
+  u_k = \sum_{i=0}^{k-1} M_{ki}w_i + v_k.
+\end{equation*}
+and the optimization is done on $\bsM$
+\begin{equation*}
+  \begin{aligned}
+    \min_{\bsx,\bsM,\bsx} \max_{\bsw} & \sum g(x_k,u_k) + g(x_K) \\
+    %\min_{\bsx,\bsM,\bsx} \max_{\bsw} & \sum x_k^\top Qx_k + u_k^\top Ru_k + x_K^\top Sx_K \\
+    \text{subject to } & x_{k+1} = f(x_k,u_k,w_k) \\
+                                      & x_0 = \textrm{x} \\
+                                      & x_k \in \mathcal{X}_k\quad \forall \bsw \in \mathbb{W} \\
+                                      & u_k \in \mathcal{U}_k\quad \forall \bsw \in \mathbb{W} \\
+                                      & u_k = \sum_{i=0}^{k-1} M_{ki}w_i + v_k.
+  \end{aligned}
+\end{equation*}
+since the knowledge of the past disturbances is sufficient to reconstruct the current state $x_k$
+\begin{equation*}
+  x_{k+1} = f(x_k,u_k,w_k).
+\end{equation*}
 
-% An extension of the previous case is to optimize also $L_k$. The problem remains tractable if the control policies are written as a function of the past disturbances
-% \begin{equation*}
-%   u_k = \sum_{i=0}^{k-1} M_{ki}\bsw_i + v_k.
-% \end{equation*}
-% and the optimization is done on $\bsM$
-% \begin{equation*}
-%   \begin{aligned}
-%     \min_{\bsx,\bsM,\bsx} \max_{\bsw} \sum x_k^\top Qx_k + u_k^\top Ru_k
-%   \end{aligned}
-% \end{equation*}
-% We could have done by setting L but then optimizing on both L and x makes the problem not-convex.
 
 \subsection{Computational Complexity}
 \label{sec:computational-complexity-rMPC}
@@ -183,7 +191,7 @@ The problem
 \begin{equation*}
   \begin{aligned}
     \min_{\bsv,\bsx} \max_{\bsw} & \sum_{k=0}^{K-1} x_k^\top Qx_k + \pi_k(x_k,\bsv)^\top R \pi_k(x_k,\bsv) + x_K^\top Sx_K\\
-    \text{subject to } & x_{k+1} = Ax_k + B\pi_k(x_k,\bsv) + dw_k \\
+    \text{subject to } & x_{k+1} = Ax_k + B\pi_k(x_k,\bsv) + Dw_k \\
                                  & x_0 = \textrm{x} \\
                                  & x_k\in \mathcal{X}_k,\quad \forall \bsw\in \mathbb{W} \\
                                  & \pi_k(x_k,\bsv)\in \mathcal{U}_k,\quad \forall \bsw\in \mathbb{W}
