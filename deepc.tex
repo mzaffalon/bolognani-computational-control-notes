@@ -1,0 +1,174 @@
+\chapter{Data-Enabled Predictive Control}
+\label{sec:deepc}
+
+This lecture presents a data-based representation of a linear system. This description generates valid inputs and outputs without using a state-based representation and avoids system identification based \textit{e.g.} on the Kalman-Ho algorithm.
+
+\section{State-Based System Response}
+\label{sec:deepc-state-based-response}
+
+The time evolution of the linear system
+\begin{equation*}
+  \begin{aligned}
+    x_{t+1} &= Ax_t + Bu_t \\
+    y_t &= Cx_t
+  \end{aligned}
+\end{equation*}
+from the initial state $x_0$ and under the control input $\bsu$ is
+\begin{equation}
+  \label{eq:time-evolution-free-response-convolution}
+  y_t = \underbrace{CA^tx_0}_{\text{free response}} + \underbrace{\sum_{j=0}^{t-1}CA^{t-1-j}Bu_j}_{\text{convolution}}
+\end{equation}
+or, in matrix form\footnote{Why also the term $u_{L-1}$? It has no effect on $y_{L-1}$.},
+\begin{equation}
+  \label{eq:time-evolution-free-response-convolution-matrix}
+  \begin{bmatrix}
+    y_0 \\ y_1 \\ y_2 \\ \vdots \\ y_{L-1}
+  \end{bmatrix} = \underbrace{
+    \begin{bmatrix}
+      C \\ CA \\ CA^2 \\ \vdots \\ CA^{L-1}
+    \end{bmatrix}
+  }_{:=\mathcal{O}_L} x_0 + \underbrace{
+  \begin{bmatrix}
+    0 & 0 & 0 & \ldots & 0 \\
+    CB & 0 & 0 & \ldots & 0 \\
+    CAB & CB & 0 & & \vdots \\
+    \vdots \\
+    CA^{L-2}B & CA^{L-3}B & \ldots & CB & 0
+  \end{bmatrix}}_{:=\mathcal{G}_L}
+\begin{bmatrix}
+  u_0 \\ u_1 \\ u_2 \\ \vdots \\ u_{L-1}
+  \end{bmatrix}
+\end{equation}
+$\mathcal{O}_L$ is the observability matrix and $\mathcal{G}_L$ the Markov coefficients describing the input-output of the system when the initial state is $x_0=0$.
+
+For the rest of this chapter, we will consider for simplicity SISO systems, $u\in \mathbb{R}$ and $y\in \mathbb{R}$, that are both controllable and observable. The additional complication for MIMO arises from the need to keep track of $m$ inputs and $p$ outputs.
+
+To keep the notation compact\footnote{Should we have this definition somewhere earlier?}, we will indicate a vector of length $L$ by the notation
+\begin{equation*}
+  \bsw_L :=
+  \begin{bmatrix}
+    w_0 \\ w_1 \\ \vdots \\ w_{L-1}
+  \end{bmatrix}.
+\end{equation*}
+Using this notation, the expression eq.~\eqref{eq:time-evolution-free-response-convolution-matrix} is rewritten as
+\begin{equation*}
+  \bsy_L = \mathcal{O}_Lx_0 + \mathcal{G}_L\bsu_L
+\end{equation*}
+where (for SISO) $\mathcal{O}_L\in\mathbb{R}^{L\times n}$ and $\mathcal{G}_L\in \mathbb{R}^{L\times L}$ is a square matrix.
+
+We have seen in the previous chapter that the rank of $\mathcal{O}_L$ can at most be $n$: if $L=n$, $\mathcal{O}_L$ is invertible since the system is assumed to be observable, and the initial state $x_0$ is uniquely determined by
+\begin{equation*}
+  x_0 = \mathcal{O}_L^{-1}(\bsy_L - \mathcal{G}_L\bsu_L)
+\end{equation*}
+if the control input $\bsu_L$ is known. If $L>n$ the system is overdetermined, the initial state $x_0$ can be reconstructed only if $\bsy_L$ a valid output sequence, that is, if the vector $\bsy_L - \mathcal{G}_L\bsu_L$ is in the column imaga of $\mathcal{O}_L$.
+
+In the different representation of behavioral system theory, the terms are rearranged as
+\begin{equation*}
+  \begin{bmatrix}
+    \bsu_L \\ \bsy_L
+  \end{bmatrix} = \underbrace{
+  \begin{bmatrix}
+    I_L & 0 \\ \mathcal{G}_L & \mathcal{O}_L
+  \end{bmatrix}}_{\Lambda_L}
+\begin{bmatrix}
+  \bsu_L \\ x_0
+\end{bmatrix}
+\end{equation*}
+where $\Lambda_L\in \mathbb{R}^{2L\times(L+n)}$ and has rank $L+n$ when $L\ge n$\footnote{I think it always has rank $n+L$.}. This formulation highlights the fact that trajectories of inputs $\bsu_L$ and outputs $\bsy_L$ must be in the column image of $\Lambda_L$. The size of the matrix $\Gamma_L$ grows as the length of the time sequence one tries to verify.
+
+In this approach inputs and outputs are treated on equal footing. This is convenient because for some systems there is no such clear cut distinction, for instance a complex electric circuit, where applying a voltage across an inductance generates a current and the other way around.
+
+The matrix $\Lambda_L$ is a full description of the system equivalent to the one described by the matrices $A$, $B$, $C$ and can predict the next $K$ outputs, $\bsy_K^{(\textrm{future})} = \{y_n,\ldots,y_{n+K-1}\}$, given the future $K$ inputs, $\bsu_K^{(\textrm{future})} = \{u_n,\ldots,u_{n+K-1}\}$ (here $L=n+K$):
+\begin{equation*}
+  %\label{eq:deepc-K-steps-predictor-Lambda}
+  \begin{bmatrix}
+    \bsu_n^{(\textrm{past})} \\ \bsu_K^{(\textrm{future})} \\ \bsy_n^{(\textrm{past})} \\ \bsy_K^{(\textrm{future})}
+  \end{bmatrix} = \underbrace{
+  \begin{bmatrix}
+    I_{n+K} & 0 \\ \mathcal{G}_{n+K} & \mathcal{O}_{n+K}
+  \end{bmatrix}}_{\Lambda_L}
+  \begin{bmatrix}
+    \bsu_n^{(\textrm{past})} \\ \bsu_K^{(\textrm{future})} \\ x_0
+  \end{bmatrix}
+\end{equation*}
+with the matrix $\Lambda_L$ appropriately extended. This can be done, since $\Lambda_L$ has been derived from the system matrices $A$, $B$ and $C$ and the initial state $x_0$ is either known or can be uniquely derived from the past inputs $\bsu_n^{(\textrm{past})} = \{u_0,\ldots,u_{n-1}\}$ and outputs $\bsy_n^{(\textrm{past})} = \{y_0,\ldots,y_{n-1}\}$.
+
+\section{Behavioral Model Approach}
+\label{sec:behavioral-model-approach}
+
+There is an alternative approach to the prediction of the next $K$ outputs and the behavior theory formulation makes it convenient to express. The main observation is that input and outputs $[\bsu_L,\bsy_L]^\top$ can only live in a subspace of dimension $2n+K=n+L$ in the space $\mathbb{R}^{2L}$: this subspace is spanned for instance by $n+L$ independent \emph{experiments}
+\begin{equation*}
+  \begin{bmatrix}
+    \bsu_L^{(1)} \\ \bsy_L^{(1)}
+  \end{bmatrix},\
+  \begin{bmatrix}
+    \bsu_L^{(2)} \\ \bsy_L^{(2)}
+  \end{bmatrix},\
+  \begin{bmatrix}
+    \bsu_L^{(3)} \\ \bsy_L^{(3)}
+  \end{bmatrix},\ldots,
+  \begin{bmatrix}
+    \bsu_L^{(n+L)} \\ \bsy_L^{(n+L)}
+  \end{bmatrix}.
+\end{equation*}
+Therefore all and the only valid input output sequences are of the form
+\begin{equation*}
+  \begin{bmatrix}
+    \bsu_L \\ \bsy_L
+  \end{bmatrix} = \underbrace{
+  \begin{bmatrix}
+    \bsu_L^{(1)} & \bsu_L^{(2)} & \bsu_L^{(3)} & \ldots & \bsu_L^{(n+L)} \\
+    \bsy_L^{(1)} & \bsy_L^{(2)} & \bsy_L^{(3)} & \ldots & \bsy_L^{(n+L)}
+  \end{bmatrix}}_{H}g
+\end{equation*}
+with $g\in\mathbb{R}^{n+L}$. Note that this is effectively a change of coordinates: $g$ is in general not more the vector of control inputs and initial state anymore\footnote{The new matrix $H$ corresponds to $\Lambda_L$ when the experiments are constructed in the following ways: for the first $L$ experiments, the initial condition is 0 and only one input at the time is activated with unit amplitude: for the first experiment, $u_0=\delta_{t-1}$ at time $t=1$, for the second experiment $u_1=\delta_{t-2}$ at time $t=2$\ldots. For the remaining $n$ experiments, the inputs are not activated and one element of the basis of the state space is activated at the time.}.
+
+To construct the matrix $H$ while being able to predict $K$ steps in the future, at least $n+L=2n+K$ trajectories are needed, each of length $L=n+K$. An efficient way to produce the required data is to acquire a \emph{single} experiment of length $2L+n-1$ and to generate $n+L$ synthetic experiments by rearranging the control input sequence $\{u_0, u_1, u_2,\ldots\}$ as the Hankel matrix
+\begin{equation*}
+  \mathcal{H}_L(\bsu) =
+  \begin{bmatrix}
+    u_0 & u_1 & u_2 & \ldots & u_{L+n-1} \\
+    u_1 & u_2 & u_3  \\
+    u_2 & u_3 & u_4 \\
+    \vdots \\
+    u_{L-1} & & & & u_{2L+n-2}
+  \end{bmatrix}
+\end{equation*}
+and, equivalently, $\mathcal{H}_L(\bsy)$ for the measured data $\bsy$. The $K$ step predictor becomes
+\begin{equation*}
+  \label{eq:deepc-K-steps-predictor-H}
+  \begin{bmatrix}
+    \bsu_n^{(\textrm{past})} \\ \bsu_K^{(\textrm{future})} \\ \bsy_n^{(\textrm{past})} \\ \bsy_K^{(\textrm{future})}
+  \end{bmatrix} =
+  \begin{bmatrix}
+    \mathcal{H}_L(\bsu_\textrm{data}) \\ \mathcal{H}_L(\bsy_\textrm{data})
+  \end{bmatrix} g
+\end{equation*}
+with $g\in \mathbb{R}^{2n+K}$ and $\bsy^\textrm{future}\in\mathbb{R}^K$ unknowns: the problem is determined because there $2(n+K)$ unknowns and an equal number of equations.
+
+
+\section{Model-Based Predictive Control}
+\label{sec:model-based-predictive-control}
+
+The behavioral model permits one to express MPC using the matrix $H$ that generates valid inputs $\bsu$ and outputs $\bsy$ compatible with the past data:
+\begin{equation*}
+  \begin{aligned}
+    \min_{\bsu, \bsy,\bsg}\ & \sum_{k=0}^{K-1} g(y_k,u_k) + g_K(y_K) \\
+    \textrm{subject to } & \begin{bmatrix}
+                             \mathcal{H}_L(\bsu_\textrm{data}) \\ \mathcal{H}_L(\bsy_\textrm{data})
+                           \end{bmatrix} g =
+                           \begin{bmatrix}
+                             \bsu_\textrm{data} \\ \bsu \\ \bsy_\textrm{data} \\ \bsy
+                           \end{bmatrix} \\
+                           & u_k \in \mathcal{U}_k\ \forall k \\
+                           & y_k \in \mathcal{Y}_k\ \forall k
+  \end{aligned}
+\end{equation*}
+Note that the state $x$ of the system is not even generated by this model and therefore it cannot appear in the cost function.
+
+From a computational point of view, this problem is more complex than standard tracking MPC because one additionally needs to optimize on $g$ with $2n+K$ additional decision variables; it also requires a much larger memory footprint to hold $H$ instead of the system matrices $A$, $B$, $C$.
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "notes"
+%%% End:
