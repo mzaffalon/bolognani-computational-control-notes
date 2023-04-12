@@ -1,7 +1,7 @@
 \chapter{System Identification}
 \label{sec:system-identification}
 
-LQR and MPC require a state space model of the system
+LQR and MPC require a state space model of the system and the measurement function
 \begin{equation*}
   x_{t+1} = f(x_t,u_t),\quad y_t = h(x_t,u_t).
 \end{equation*}
@@ -9,9 +9,9 @@ Obtaining a model requires determining
 \begin{itemize}
 \item the Markovian state $x$, so that $x_{t+1}$ is determined by $x_t$ and $u_t$;
 \item the dynamics $f(x,u)$ of the system;
-\item the observation (?) function $h(x,u)$.
+\item the measurement function $h(x,u)$.
 \end{itemize}
-In the rest of this chapter we limit to the case of a noiseless linear time-invariant update and observation.
+In the rest of this chapter we only consider the case of a noiseless linear time-invariant update and observation.
 
 State space representations are not unique: for instance under the invertible transformation $T$ such that $x=Tw$, the two systems are different
 \begin{equation*}
@@ -26,7 +26,7 @@ State space representations are not unique: for instance under the invertible tr
 \end{equation*}
 Nevertheless the input-output behavior, the relation between the input $u$ and the output $y$, remains the same. This can be seen by checking that their response is the same for the same input, \textit{e.g.} an input response
 \begin{equation*}
-  u_u=e_k\delta_t\quad \delta_t =
+  u_{k,0} = e_k\delta_t,\quad \delta_t =
   \begin{cases}
     1 & \text{ for } t=0 \\
     0 & \text{ otherwise}

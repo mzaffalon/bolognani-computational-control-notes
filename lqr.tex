@@ -5,16 +5,16 @@ Controlling a dynamic system consists in finding a vector of control inputs $\bs
 \begin{equation*}
   \min_{\bsu\in\mathcal{U}} J(\bsu)
 \end{equation*}
-where the control input is constrained to the space $\mathcal{U}$. This is generally a hard problem for the following reasons:
+with the control input constrained to the space $\mathcal{U}$. This is generally a hard problem for the following reasons:
 \begin{itemize}
-\item $\bsu$ the state space $\bsu$ is large;
+\item the state space $\bsu$ is large;
 \item a fairly accurate model of the system is required. This can be obtained by first principles, by numerical simulation or can be a black box (oracle) that, given the control input $\bsu$, computes the system trajectory;
 \item the optimization problem is in general non-convex. For convex problems, which have a single (global) minimum\footnote{Not all functions with single minimum are convex: for instance
     \begin{equation*}
       f(x) = -\frac{1}{1+x^2}
     \end{equation*}}, there exists efficient solvers.
 \end{itemize}
-From a practical point of view, the open-loop nature of the optimal control sequence makes it useless in the presence of disturbances and uncertainties.
+From a practical point of view, the open-loop nature of the optimal control sequence makes it less reliable in the presence of disturbances and uncertainties.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Bellman's Principle}
@@ -30,15 +30,16 @@ The problem becomes tractable under the following conditions
 \item the initial condition $x_0$ is known;
 \item the cost is addictive over time
   \begin{equation*}
-    J(\bsx,\bsu) = \sum_t g_t(x_t,u_t).
+    V(\bsx,\bsu) = \sum_t g_t(x_t,u_t).
   \end{equation*}
 \end{itemize}
-Under these assumptions, Bellman's principle allows us to solve the optimization problem
+Under these assumptions, Bellman's principle allows one to solve the optimization problem
 \begin{equation}
   \label{eq:general-optimization-problem}
   \begin{aligned}
-    V(X_0) = \min_{\bsx,\bsu} & \sum_{t=0}^T g_t(x_t,u_t) + g_T(x_T) \\
-    \text{subject to } & x_{t+1} = f_t(x_t,u_t),\ x_o=X_0 \\
+    U(X_0) = \min_{\bsx,\bsu} & \sum_{t=0}^T g_t(x_t,u_t) + g_T(x_T) \\
+    \text{subject to } & x_{t+1} = f_t(x_t,u_t)\\
+                              & x_o=X_0 \\
                               &x_t \in \mathcal{X}_t\quad \forall t \\
                               &u_t \in \mathcal{U}_t\quad \forall t.
   \end{aligned}
@@ -95,7 +96,7 @@ This quadratic cost function can represent any linear feedback controller $u = -
 \begin{equation*}
   x^\top Qx + u^\top Ru + 2x^\top N u = x^\top \left(\bar{K}^\top \bar{K} + K^\top K - 2 \bar{K}^\top K\right) x = x^\top \left(\bar{K}-K\right)^2x
 \end{equation*}
-this occurs at $K=\bar{K}$.} and linear dynamics
+this occurs at $K=\bar{K}$.}, linear dynamics and no dynamics
 \begin{equation}
   \label{eq:LQR-formulation}
   \begin{aligned}
@@ -103,7 +104,7 @@ this occurs at $K=\bar{K}$.} and linear dynamics
     \text{subject to } & x_{t+1} = Ax_t + Bu_t.
   \end{aligned}
 \end{equation}
-We impose a \emph{strictly} positive cost on the control inputs, $R\succ 0$ to reflect the case that is relevant in practice where there is a cost associated with actuating the system.
+One imposes a \emph{strictly} positive cost on the control inputs, $R\succ 0$ to reflect the case that is relevant in practice where there is a cost associated with actuating the system.
 
 \begin{proof}
   The LQR can be solved analytically and the solution is of the form
@@ -113,7 +114,7 @@ We impose a \emph{strictly} positive cost on the control inputs, $R\succ 0$ to r
   \end{equation}
   We show this by induction starting from $t=T$ and recursing backwards.
 
-  The initial case is satisfied, because $V_T(x) = x^\top Sx$ is quadratic and $P_T = S$. At state $t$, assuming that $V_{t+1}(x) = x^\top P_{t+1} x$, we have $V_t(x) = \min_u J_t(x,u) = J_t(x,u^\star)$ where
+  The initial case is satisfied, because $V_T(x) = x^\top Sx$ is quadratic and $P_T = S$. At time $t$, assuming that $V_{t+1}(x) = x^\top P_{t+1} x$, we have $V_t(x) = \min_u J_t(x,u) = J_t(x,u^\star)$ where
   \begin{align*}
     J_t(x,u) &= x^\top Qx + u^\top Ru + V_{t+1}(Ax+Bu) \\
              &= x^\top\left(Q + A^\top P_{t+1}A\right) x + u^\top\left(R + B^\top P_{t+1}B\right) u + 2u^\top B^\top P_{t+1}Ax.
@@ -124,7 +125,7 @@ We impose a \emph{strictly} positive cost on the control inputs, $R\succ 0$ to r
     \label{eq:LQR-optimal-control-input}
     &\quad \rightarrow u^\star = -\underbrace{(R+B^\top P_{t+1}B)^{-1}B^\top P_{t+1}A}_{K_t}x.
   \end{align}
-  This solution exists since $R+B^\top P_{t+1}B$ being a (strictly) positive $m\times m$ definite matrix can be inverted. We need to prove that $V_t(x)= x^\top P_t x$. We plug the optimal control $u^\star$ into the expression for $V_t(x)=J_t(x,u^\star)$ to obtain
+  This solution exists since $R+B^\top P_{t+1}B$ being a strictly positive $m\times m$ definite matrix can be inverted. We need to prove that $V_t(x)= x^\top P_t x$. We plug the optimal control $u^\star$ into the expression for $V_t(x)=J_t(x,u^\star)$ to obtain
   \begin{align*}
     V_t(x) &= x^\top \left(Q + A^\top P_{t+1}A\right) x - x^\top A^\top P_{t+1}B\left(R+B^\top P_{t+1}B\right)^{-1}B^\top P_{t+1}Ax
   \end{align*}
@@ -135,7 +136,7 @@ We impose a \emph{strictly} positive cost on the control inputs, $R\succ 0$ to r
   \end{equation}
 \end{proof}
 
-LQR finds an optimal control sequence $\bsu^\star = \{u_0^\star, u_1^\star,\ldots,u_{T-1}^\star\}$ computating by backward recursion the matrices $K_t$ using eq.~\eqref{eq:solution-timedependent-ricatti} and eq.~\eqref{eq:LQR-optimal-control-input} followed by forward integration of the system dynamics from the initial state $x_0$ to obtain the next state $x_t$ and the next control input $u_t^\star = -K_tx_t$.
+LQR finds an optimal control sequence $\bsu^\star = \{u_0^\star, u_1^\star,\ldots,u_{T-1}^\star\}$ computating the matrices $K_t$ by backward recursion, using eq.~\eqref{eq:solution-timedependent-ricatti} and eq.~\eqref{eq:LQR-optimal-control-input} followed by forward integration of the system dynamics from the initial state $x_0$ to obtain the next state $x_t$ and the next control input $u_t^\star = -K_tx_t$.
 
 Note that the optimal control sequence is a feedback law, $u_t=-K_tx_t$. In case of state perturbation, the system evolves differently from the predicted state, but applying the input $u_t=-K_t\tilde{x}_t$ on the measured state $\tilde{x}_t$ guarantees optimality because by Bellman's principle, the computed sequence is optimal from any starting point and onwards. Contrast this with model mismatch: in this case the feedback law using $K_t$ is not optimal because it relies on the matrices $A$ and $B$ being an accurate representation of the system.
 
@@ -165,17 +166,16 @@ Since the problem is time-invariant, the feedback law is computed by solving the
 \end{equation*}
 using \textit{e.g.} an ARE solver or analytically. Note that AREs have multiple solutions and for a controllable system, the \emph{optimal} solution is the matrix $P_\infty$ with the minimum cone. A solver will pick the correct solution. Alternatively, one can iterate eq.~\eqref{eq:solution-timedependent-ricatti} until convergence. It can be proven that the iteration converges to the solution with the smallest cone.
 
-The optimal $K_\infty$ may however not stabilize the system: stabilization happens if and only if all unstable modes are weighted in $Q$, \textit{i.e.} unstable modes must be observable\footnote{Stable modes that are not weighted by $Q$ are not a concern because they decay.}.
-
+The optimal $K_\infty$ may however not stabilize the system and stabilization happens if and only if all unstable modes are weighted in $Q$:
 \begin{theorem}
   Let $Q = C C^\top$. The feedback $K_\infty$ stabilizes the system if and only if
   \begin{equation*}
     x_{t+1} = Ax_t,\quad y_t = C^\top x_t
   \end{equation*}
-  does not have unobservable modes.
+  does not have unobservable unstable modes.
 \end{theorem}
-To see why this is correct, consider $||y_t||^2 = x_t^\top CC^\top x_t = x_t^\top Qx_t$. This is an artificial system whose norm of the output is the cost. And then?
-
+Indeed the quantity $||y_t||^2 = x_t^\top CC^\top x_t = x_t^\top Qx_t$
+enters the cost function: a feedback law that keeps this quantity finite stabilizes the system.
 
 \subsection{Stability of the Optimal Controller}
 \label{sec:stability-optimal-controller}
