@@ -1,16 +1,17 @@
 \documentclass[11pt]{report}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-%\usepackage{enumitem}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{amsthm}
+% \usepackage{xcolor}
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{biblatex}
-%\date{\today}
+
+% \date{\today}
 \title{227-0216-00L: Computational Control FS2023}
-\author{Michele Zaffalon\\Personal notes for Dr. Bolognani's class.\\All errors are mine: use notes at your own risk!}
+\author{Michele Zaffalon\\Personal notes for Dr. Bolognani's class.\\Use notes at your own risk!}
 
 \newcommand{\du}{\ensuremath{\mathrm{d}}}
 \newcommand{\bs}[1]{\boldsymbol{#1}}
@@ -22,6 +23,8 @@
 \newcommand{\bsy}{\bs{\mathrm{y}}}
 \newcommand{\bsw}{\bs{\mathrm{w}}}
 \newcommand{\bsz}{\bs{\mathrm{z}}}
+\newcommand{\argmin}{\textrm{argmin}}
+\newcommand{\rank}{\textrm{rank}}
 
 \newtheorem{theorem}{Theorem}
 
@@ -34,11 +37,11 @@
 
 %\setcounter{chapter}{1}
 
-\include{lqr}
-\include{mpc}
-\include{economic-mpc}
-\include{robust-mpc}
-\include{identification}
+%\include{lqr}
+%\include{mpc}
+%\include{economic-mpc}
+%\include{robust-mpc}
+%\include{identification}
 \include{deepc}
 
 %A free to download book is at \cite{free-book-diehl}.
