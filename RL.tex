@@ -56,14 +56,14 @@ Note that now only the policy evaluation requires the model information which is
 
 We are now left with the task of computing the policy assessment step: the advantage of this approach is that this can be obtained from the simulated data:
 \begin{itemize}
-\item let the system be controlled by a policy $\pi$ and collect a long episode
+\item let the system be controlled by a policy $\pi$ and collect a sufficiently long episode
   \begin{equation*}
-    (x_0,u_0,r_0),\ (x_1,u_1,r_1),\ldots (x_T,u_T,r_T)
+    (x_0,u_0,r_0),\ (x_1,u_1,r_1),\ldots (x_T,u_T,r_T);
   \end{equation*}
 \item compute the \emph{empirical cost} $g_0$, $g_1$,\ldots $g_T$ from the immediate costs $r_i$ and the discount cost factor $\gamma$
   \begin{equation}
     \label{eq:RL-empirical-cost}
-    g_k = \sum_{i=k}^T \gamma^{i-k}r_i
+    g_k = \sum_{i=k}^T \gamma^{i-k}r_i;
   \end{equation}
 \item interpret $g_k$ as a realization of the return\footnote{By definition, $Q^\pi(x,u)$ is the cost of applying input $u$ when in state $x$ and then applying the policy $\pi$.} of the state-action pair $(x_k,u_k)$
   \begin{equation*}
@@ -80,9 +80,9 @@ This method assumes no explicit knowledge of transition probabilites $P_{x,x^\pr
 
 A few remarks are required:
 \begin{itemize}
-\item The policy cannot be evaluated, and therefore $Q$ cannot be computed, until the episode is terminated. This is because the empirical cost eq.~\eqref{eq:RL-empirical-cost} requires one to use the same policy until the end of the episode. The reinforced learning method is therefore not adequate to adaptive learning (\textit{i.e.} learn and control);
-\item there is no guarantee that the \emph{estimate} of $Q$, \textit{i.e.} for a single realization, eq.~\eqref{eq:RL-Q-estimate-multiple-visits}, satisfies the self-consistency Bellman equation eq.~\eqref{eq:Q-function-policy-evaluation}. The identity is however valid in the limit of infinite realizations;
-\item Markovianity?
+\item the policy cannot be evaluated, and therefore $Q$ cannot be computed, until the episode is terminated. This is because the empirical cost eq.~\eqref{eq:RL-empirical-cost} requires one to use the same policy until the end of the episode. MC learning method is therefore not adequate to adaptive learning;
+\item there is no guarantee that the \emph{estimate} of $Q$, \textit{i.e.} for a single realization, eq.~\eqref{eq:RL-Q-estimate-multiple-visits}, satisfies the self-consistent Bellman equation eq.~\eqref{eq:Q-function-policy-evaluation}. The identity is however valid in the limit of infinite realizations;
+\item Markovianity? I did not understand the remark in the lecture.
 \end{itemize}
 
 \subsection{Exploration vs Exploitation}
@@ -110,13 +110,13 @@ In both cases, if done ``properly'', each state-action pair is visited infinitel
 \section{Scalability and Parametrization of $Q$}
 \label{sec:RL-Q-parametrization}
 
-The computational complexity of the $Q$ function can become intractable when the state-action space is large, the typical case, either intrinsically because the system has indeed many states and inputs or as a result of the discretization of a continuous system. The trick is to parametrize the $Q$ function by a small set of basis functions
+The computational complexity of the $Q$ function can become intractable when the state-action space is large, either intrinsically because the system has indeed many states and inputs or as a result of the discretization of a continuous system. The trick is to parametrize the $Q$ function by a small set of basis functions
 \begin{equation*}
   Q_\theta(x,u),\quad \theta \in\mathbb{R}^d\quad \text{where } d\ll MN
 \end{equation*}
-thereby restricting unnecessary degrees of freedom. A smart parametrization may allow one to guess the $Q$ function for state-action pairs that have not been observed. In the setting of continuous systems where the basis functions are continuous functions, the parametrization reduces the initial system to a discrete one.
+thereby restricting unnecessary degrees of freedom. A smart parametrization may allow one to guess the $Q$ function also for state-action pairs that have not been observed. In the setting of continuous systems where the basis functions are continuous functions, the parametrization also reduces the initial system to a discrete one.
 
-Prior information on the problem may suggest a smart parametrization. For instance in the LQR case, we assumed that the value function is quadratic in $x$ and $u$ (?).
+Prior information on the problem may suggest a smart parametrization. For instance in the LQR case, we assumed that the value function is quadratic in $x$ and $u$ (?). Did not understand the remark from the lecture.
 
 The downside of the parametrization is that the optimal $Q^\star$  may not belong to the lower dimensional space. Therefore the solution to the Bellman equation for a given policy $\pi$ may not belong to the space
 \begin{equation*}
@@ -148,7 +148,7 @@ where, in matrix form,
   \label{eq:Q-function-matrix}
   \mathcal{B}(Q) = R + \gamma T^\pi Q.
 \end{equation}
-In the \emph{projected Bellman equation} we therefore seek a solution $Q_\theta\in \mathcal{Q}$ by first projecting $\mathcal{B}(Q_\theta)$ into the subspace $\mathcal{Q}$ using the projection operator
+The \emph{projected Bellman equation} seeks a solution $Q_\theta$ by first projecting $\mathcal{B}(Q_\theta)$ into the subspace $\mathcal{Q}$ using the projection operator
 \begin{equation*}
   \Pi(\mathcal{B}(Q_\theta)) = \arg \min_{Q_{\hat{\theta}}}\ |\!| Q_{\hat{\theta}} - \mathcal{B}(Q_\theta) |\!|_\rho^2
 \end{equation*}
@@ -156,7 +156,7 @@ in the $\rho$-norm\footnote{The $\rho$-norm is defined as
 \begin{equation*}
   |\!|v|\!|_\rho^2 = v^\top \rho v.
 \end{equation*}}
-(where is the $\rho$ matrix coming from?) and then look for the fixed point
+(where is the $\rho$ matrix coming from?) and then looks for the fixed point
 \begin{equation}
   \label{eq:projected-Bellman-equation}
   Q_\theta = \Pi(\mathcal{B}(Q_\theta)).
@@ -208,9 +208,9 @@ This part was not clear from the lecture. $\rho$ depends on how often the pair $
 \section{Reinforcement Learning}
 \label{sec:r-learning}
 
-We have seen how the policy and value iteration methods require either a model or a full and sufficiently rich trajectory. MC learning forces us to wait until the end of the episode to improve the policy: here, we want to learn the system as the data is collected along a single trajectory while also controlling it.
+We have seen how the policy and value iteration methods require either a model or a full and sufficiently rich trajectory. MC learning forces us to wait until the end of the episode to improve the policy. In this Section, we want to learn the system as the data is collected along a single trajectory while also controlling the system.
 
-In MC learning, to construct the $Q$ function from specific realizations, we have not made use of Bellman equation, eq.~\eqref{eq:Q-function-policy-evaluation} because this is only satisfied in the limit of infinitely long episode. For a finite episode, the \emph{temporal difference error}, the amount by which Bellman equation is not satisfied,
+In MC learning, to construct the $Q$ function from specific realizations, we could have not made use of Bellman equation, eq.~\eqref{eq:Q-function-policy-evaluation} because this is only satisfied in the limit of infinitely long episode. For a finite episode, the \emph{temporal difference error}, the amount by which Bellman equation is not satisfied,
 \begin{equation}
   \label{eq:TD-error}
   e_k = r_k + \gamma Q(x_{k+1},u_{k+1}) - Q(x_k,u_k)
@@ -219,7 +219,7 @@ can be evaluated from two subsequent data points
 \begin{equation*}
   (x_k,u_k,r_k)\quad (x_{k+1},u_{k+1}).
 \end{equation*}
-In general the error $e_k$ is not zero but its average is, $\mathbb{E}[e_k] = 0$, according to the Bellman equation.
+In general the error $e_k$ is not zero but its average must be, $\mathbb{E}[e_k] = 0$, according to the Bellman equation.
 
 An iterative way to find the $Q$ function that solves $\mathbb{E}[e_k] = 0$ is provided by the stochastic approximation. Let $q$ a decision variable (?) and $e(q)$ a random variable for which we want to find $q^\star$ that solves $\mathbb{E}[e(q^\star)]=0$. Then the iteration\footnote{Why the $\leftarrow$ and not simply $=$?}
 \begin{equation}
