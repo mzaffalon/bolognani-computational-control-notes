@@ -4,7 +4,7 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{amsthm}
-% \usepackage{xcolor}
+\usepackage{verbatim}
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{biblatex}
@@ -23,10 +23,11 @@
 \newcommand{\bsy}{\bs{\mathrm{y}}}
 \newcommand{\bsw}{\bs{\mathrm{w}}}
 \newcommand{\bsz}{\bs{\mathrm{z}}}
-\newcommand{\argmin}{\textrm{argmin}}
 \newcommand{\rank}{\textrm{rank}}
 
 \newtheorem{theorem}{Theorem}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
 
 \addbibresource{notes.bib}
 
@@ -37,12 +38,14 @@
 
 %\setcounter{chapter}{1}
 
-%\include{lqr}
-%\include{mpc}
-%\include{economic-mpc}
-%\include{robust-mpc}
-%\include{identification}
+\include{lqr}
+\include{mpc}
+\include{economic-mpc}
+\include{robust-mpc}
+\include{identification}
 \include{deepc}
+\include{markov}
+\include{RL}
 
 %A free to download book is at \cite{free-book-diehl}.
 

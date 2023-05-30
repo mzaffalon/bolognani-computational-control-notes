@@ -1,0 +1,354 @@
+\chapter{Monte-Carlo and Reinforcement Learning}
+\label{chap:mc-rl}
+
+\section{Monte-Carlo Learning}
+\label{sec:mc-learning}
+
+Also in the context of MDP, one is interested in finding the optimal policy without prior model information. There are two settings:
+\begin{itemize}
+\item based on collected data, typically in the form of repeated episodes
+  \begin{equation*}
+    (x_0,u_0,r_0),\ (x_1,u_1,r_1),\ldots (x_T,u_T,r_T)
+  \end{equation*}
+  for instance coming from repeatition of the control task in a numerical simulator or controlled environment, \textit{i.e.} experimentally. The episodes could be stochastic because the application of $u_0$ from state $x_0$ may transition the system to a different final state but the collected data will reveal only one realization;
+\item online during the control task with no prior training in a one-shot approach. The \emph{adaptive control} approach is a challenging dual learn and control task and has been an open problem for decades.
+\end{itemize}
+The first approach is suitable for an incremental improvement of the policy; the second can deal with time-dependent models.
+
+\section{$Q$ Function}
+\label{sec:Q-function}
+
+We have seen that $V^\pi(x)$ is a predictor of the quality of the candidate policy. For reinforcement learning where the learning comes from experimental data, it is more convenient to reformulate the problem in terms of the quality $Q$ function
+\begin{equation}
+  \label{eq:q-function-definition}
+  Q^\pi(x,u) = R_x^u + \gamma \sum_{x^\prime}P_{x,x^\prime}^u V^\pi (x^\prime).
+\end{equation}
+$Q^\pi(x,u)$ is the expected future cost when taking action $u$ in state $x$, as dictated by the policy $\pi$. In contrast to the value function $V(x)\in \mathbb{R}^N$, the size of $Q$ is $N\times M$: this increased problem size has the advantange, amongst others, to make the policy update step of the policy iteration trivial.
+
+The value function is the expected $Q$ function averaged over the policy $\pi$
+\begin{equation}
+  \label{eq:value-function-from-q}
+  V^\pi(x) = \sum_u \pi(x,u)Q^\pi(x,u).
+\end{equation}
+The Bellman equation can be written in terms of the $Q$ function in closed form using eq.~\eqref{eq:value-function-from-q} in eq.~\eqref{eq:q-function-definition}
+\begin{equation}
+  \label{eq:Q-function-policy-evaluation}
+  Q^\pi(x,u) = R_x^u + \gamma \sum_{x^\prime} P_{x,x^\prime}^u \sum_{u^\prime} \pi(x^\prime,u^\prime)Q^\pi(x^\prime,u^\prime)
+\end{equation}
+and the Bellman optimality principle as
+\begin{equation}
+  \label{eq:Q-function-Bellman-optimality}
+  Q^\star(x,u) = R_x^u + \gamma \sum_{x^\prime}P_{x,x^\prime}^u \left(\min_{u^\prime} Q^\star(x^\prime,u^\prime)\right)
+\end{equation}
+where here we used the previous observation that the optimal policy is deterministic.
+
+\subsection{Policy Iteration for the $Q$ function}
+
+The policy iteration with the $Q$ function is rewritten as
+\begin{itemize}
+\item the \emph{policy evaluation} requires solving the higher-dimensional linear system eq.~\eqref{eq:Q-function-policy-evaluation};
+\item the \emph{policy update} becomes even simpler than for the value function
+  \begin{equation*}
+    \pi(x,u) = \arg \min_\nu \sum_u \nu(x,u) Q(x,u).
+  \end{equation*}
+\end{itemize}
+Note that now only the policy evaluation requires the model information which is contained in the large matrix $Q(x,u)$.
+
+We are now left with the task of computing the policy assessment step: the advantage of this approach is that this can be obtained from the simulated data:
+\begin{itemize}
+\item let the system be controlled by a policy $\pi$ and collect a long episode
+  \begin{equation*}
+    (x_0,u_0,r_0),\ (x_1,u_1,r_1),\ldots (x_T,u_T,r_T)
+  \end{equation*}
+\item compute the \emph{empirical cost} $g_0$, $g_1$,\ldots $g_T$ from the immediate costs $r_i$ and the discount cost factor $\gamma$
+  \begin{equation}
+    \label{eq:RL-empirical-cost}
+    g_k = \sum_{i=k}^T \gamma^{i-k}r_i
+  \end{equation}
+\item interpret $g_k$ as a realization of the return\footnote{By definition, $Q^\pi(x,u)$ is the cost of applying input $u$ when in state $x$ and then applying the policy $\pi$.} of the state-action pair $(x_k,u_k)$
+  \begin{equation*}
+    Q^\pi(x_k,u_k) \approx g_k.
+  \end{equation*}
+  If the system is stochastic and therefore governed by transition probabilites, $Q^\pi(x,u)$ must be computed as the average over multiple visits
+  \begin{equation}
+    \label{eq:RL-Q-estimate-multiple-visits}
+    Q^\pi(x,u) = \frac{\sum_{t=1}^T 1[x_t=x,u_t=u]g_t}{\sum_{t=1}^T 1[x_t=x,u_t=u]}
+  \end{equation}
+  where the accumulation must be sufficiently long to see all possibles combinations of states and inputs.
+\end{itemize}
+This method assumes no explicit knowledge of transition probabilites $P_{x,x^\prime}^u$.
+
+A few remarks are required:
+\begin{itemize}
+\item The policy cannot be evaluated, and therefore $Q$ cannot be computed, until the episode is terminated. This is because the empirical cost eq.~\eqref{eq:RL-empirical-cost} requires one to use the same policy until the end of the episode. The reinforced learning method is therefore not adequate to adaptive learning (\textit{i.e.} learn and control);
+\item there is no guarantee that the \emph{estimate} of $Q$, \textit{i.e.} for a single realization, eq.~\eqref{eq:RL-Q-estimate-multiple-visits}, satisfies the self-consistency Bellman equation eq.~\eqref{eq:Q-function-policy-evaluation}. The identity is however valid in the limit of infinite realizations;
+\item Markovianity?
+\end{itemize}
+
+\subsection{Exploration vs Exploitation}
+
+The greedy policy improvement step can be stuck in a suboptimal solution when the triple $(x,u,r)$ is never explored by the policy and the associated $Q$ value is not available. This is usually fixed by \textit{e.g.}
+\begin{itemize}
+\item the $\epsilon$-greedy policy improvement, where a random action from all possible actions $\mathcal{U}$ is tried with probability $\epsilon$
+  \begin{equation}
+    \label{eq:epsilon-greedy-policy-improvement}
+    \pi(x,u) =
+    \begin{cases}
+      \arg \min_u Q(x,u) & \text{with probability }1-\epsilon \\
+      \text{Uniform}(\mathcal{U}) & \text{with probability }\epsilon
+    \end{cases}.
+  \end{equation}
+  A large $\epsilon$ allows for more exploration; or
+\item the Bolzmann policy improvement\footnote{A note on the initialization of the $Q$ function: the Bolzmann policy requires the knowledge of its values also for state-action pairs that have not been explored. If the optimization is set up to minimize positive costs, $Q$ is initialized to a large number; in the case of maximization, as it is more common in RL settings, then $0$ is commonly used.}
+  \begin{equation*}
+  \pi(x,u) = \frac{e^{-\beta Q(x,u)}}{\sum_u e^{-\beta Q(x,u)}}.
+\end{equation*}
+Here a small $\beta$ implies more exploration.
+\end{itemize}
+In both cases, if done ``properly'', each state-action pair is visited infinitely many times and the policy converges to a greedy policy with probability $1$.
+
+\section{Scalability and Parametrization of $Q$}
+\label{sec:RL-Q-parametrization}
+
+The computational complexity of the $Q$ function can become intractable when the state-action space is large, the typical case, either intrinsically because the system has indeed many states and inputs or as a result of the discretization of a continuous system. The trick is to parametrize the $Q$ function by a small set of basis functions
+\begin{equation*}
+  Q_\theta(x,u),\quad \theta \in\mathbb{R}^d\quad \text{where } d\ll MN
+\end{equation*}
+thereby restricting unnecessary degrees of freedom. A smart parametrization may allow one to guess the $Q$ function for state-action pairs that have not been observed. In the setting of continuous systems where the basis functions are continuous functions, the parametrization reduces the initial system to a discrete one.
+
+Prior information on the problem may suggest a smart parametrization. For instance in the LQR case, we assumed that the value function is quadratic in $x$ and $u$ (?).
+
+The downside of the parametrization is that the optimal $Q^\star$  may not belong to the lower dimensional space. Therefore the solution to the Bellman equation for a given policy $\pi$ may not belong to the space
+\begin{equation*}
+  \mathcal{Q} = \{Q_\theta,\ \theta\in\mathbb{R}^d\}
+\end{equation*}
+and policy iteration may not converge or converge to the suboptimal solution. Moreover the policy update step may require additional computation that in the discrete case was limited to selecting one entry in the Q function.
+
+\subsection{Linear Parametrization}
+\label{sec:RL-linear-parametrization}
+
+We consider the linear parametrization
+\begin{equation}
+  \label{eq:Q-linear-parametrization}
+  Q_\theta(x,u) = \sum_{\ell=1}^d \phi_\ell(x,u)\theta_\ell = \Phi(x,u)\theta
+\end{equation}
+where $\phi_\ell(x,u)$ are basis functions. These can be
+\begin{itemize}
+\item polynomials $\{x, u, x^2, u^2, xu,\ldots\}$;
+\item quadratic forms $x^\top A_\ell x$ where $A_\ell$ can be a matrix with only one element different from zero or a set of positive definite matrices;
+\item a set of discrete basis functions\footnote{In the game of Tetris on a board size of $20\times 10$, there are at least $2^{200}$ states, each board position being either empty or occupied. A solution mimicking the human approach has been realized with $d=21$ only.}.
+\end{itemize}
+
+In general the solution to the Bellman equation eq.~\eqref{eq:Q-function-policy-evaluation} is not in the form $\Phi\theta$ and the equation can only be solved approximately
+\begin{equation*}
+  Q_\theta(x,u) \approx \underbrace{R_x^u + \gamma\sum_{x^\prime} P_{x,x^\prime}^u \sum_{u^\prime} \pi(x^\prime,u^\prime)Q_\theta(x^\prime,u^\prime)}_{:=\mathcal{B}(Q_\theta)}
+\end{equation*}
+where, in matrix form,
+\begin{equation}
+  \label{eq:Q-function-matrix}
+  \mathcal{B}(Q) = R + \gamma T^\pi Q.
+\end{equation}
+In the \emph{projected Bellman equation} we therefore seek a solution $Q_\theta\in \mathcal{Q}$ by first projecting $\mathcal{B}(Q_\theta)$ into the subspace $\mathcal{Q}$ using the projection operator
+\begin{equation*}
+  \Pi(\mathcal{B}(Q_\theta)) = \arg \min_{Q_{\hat{\theta}}}\ |\!| Q_{\hat{\theta}} - \mathcal{B}(Q_\theta) |\!|_\rho^2
+\end{equation*}
+in the $\rho$-norm\footnote{The $\rho$-norm is defined as
+\begin{equation*}
+  |\!|v|\!|_\rho^2 = v^\top \rho v.
+\end{equation*}}
+(where is the $\rho$ matrix coming from?) and then look for the fixed point
+\begin{equation}
+  \label{eq:projected-Bellman-equation}
+  Q_\theta = \Pi(\mathcal{B}(Q_\theta)).
+\end{equation}
+
+\begin{theorem}
+  The fixed point of the projected Bellman equation is given by
+  \begin{equation}
+    \label{eq:Q-function-projected-solution}
+    %\left(\Phi^\top \rho \Phi - \gamma \Phi^\top\rho T^\pi\Phi\right)\theta = \Phi^\top\rho R
+    \Phi^\top \rho \left(I - \gamma T^\pi\right) \Phi\theta = \Phi^\top\rho R.
+  \end{equation}
+\end{theorem}
+\begin{proof}
+  Let $Q_\theta = \Phi \theta$; by eq.~\eqref{eq:Q-function-matrix} we have $\mathcal{B}(Q_\theta) = R + \gamma T^\pi\Phi\theta$. To find $\Pi(B(Q_\theta))$, we compute
+  \begin{equation*}
+    %\arg \min_{\hat{\theta}} \frac{1}{2} |\!| \Phi \hat{\theta} - \mathcal{B}(Q_\theta) |\!|^2_\rho =
+    \arg \min_{\hat{\theta}} \frac{1}{2} |\!| \Phi \hat{\theta} - R - \gamma T^\pi \Phi\theta |\!|^2_\rho
+  \end{equation*}
+  by setting the gradient with respect to $\hat{\theta}$ to zero, to give
+  \begin{equation*}
+    % \Phi^\top\rho\left(\Phi \hat{\theta} - R - \gamma T^\pi \Phi\theta\right) = 0
+    \Phi^\top\rho\Phi \hat{\theta} = \Phi^\top\rho\left(R + \gamma T^\pi \Phi\theta\right).
+  \end{equation*}
+  and  $\Pi(B(Q_\theta)) = \Phi\hat{\theta}$. Imposing the fixed point condition eq.~\eqref{eq:projected-Bellman-equation} gives
+  \begin{equation*}
+    \Phi\hat{\theta} = \Phi\theta
+  \end{equation*}
+  which we can substitute into the equation above. After rearranging the terms, we obtain eq.~\eqref{eq:Q-function-projected-solution}.
+\end{proof}
+
+Eq.~\eqref{eq:Q-function-projected-solution} needs the model information contained in $T^\pi$. For a model free approach, we construct the matrices $\Phi^\top\rho \Phi$, $\Phi^\top\rho \Phi$ and $\Phi^\top\rho R$ from the episodes/trajectories. From the data and the basis function, one can construct the terms
+\begin{equation*}
+  \phi(x_k,u_k)\phi(x_k,u_k)^\top,\quad \phi(x_k,u_k)\phi(x_{k+1},u_{k+1})^\top,\quad \phi(x_k,u_k)r_k
+\end{equation*}
+
+This part was not clear from the lecture. $\rho$ depends on how often the pair $(x,u)$ is visited.
+
+\begin{theorem}
+  We have
+  \begin{equation*}
+    \Phi^\top\rho\Phi \approx \frac{1}{K} \sum_{k=1}^K \phi(x_k,u_k)^\top\phi(x_k,u_k).
+  \end{equation*}
+\end{theorem}
+\begin{proof}
+  ?
+\end{proof}
+
+\section{Reinforcement Learning}
+\label{sec:r-learning}
+
+We have seen how the policy and value iteration methods require either a model or a full and sufficiently rich trajectory. MC learning forces us to wait until the end of the episode to improve the policy: here, we want to learn the system as the data is collected along a single trajectory while also controlling it.
+
+In MC learning, to construct the $Q$ function from specific realizations, we have not made use of Bellman equation, eq.~\eqref{eq:Q-function-policy-evaluation} because this is only satisfied in the limit of infinitely long episode. For a finite episode, the \emph{temporal difference error}, the amount by which Bellman equation is not satisfied,
+\begin{equation}
+  \label{eq:TD-error}
+  e_k = r_k + \gamma Q(x_{k+1},u_{k+1}) - Q(x_k,u_k)
+\end{equation}
+can be evaluated from two subsequent data points
+\begin{equation*}
+  (x_k,u_k,r_k)\quad (x_{k+1},u_{k+1}).
+\end{equation*}
+In general the error $e_k$ is not zero but its average is, $\mathbb{E}[e_k] = 0$, according to the Bellman equation.
+
+An iterative way to find the $Q$ function that solves $\mathbb{E}[e_k] = 0$ is provided by the stochastic approximation. Let $q$ a decision variable (?) and $e(q)$ a random variable for which we want to find $q^\star$ that solves $\mathbb{E}[e(q^\star)]=0$. Then the iteration\footnote{Why the $\leftarrow$ and not simply $=$?}
+\begin{equation}
+  \label{eq:TD-error-iterative-solution}
+  q_{k+1} \leftarrow q_k -\alpha_k e(q_k)
+\end{equation}
+converges to the solution $q^\star$ of $E[e(q)]=0$ provided
+\begin{itemize}
+\item $e(q)$ is bounded;
+\item $\mathbb{E}[e(q)]$ is non-decreasing in $q$;
+\item $\mathbb{E}(e^\prime(q^\star))$ exists and is positive;
+\item the sequence $\alpha_k$ satisfies
+  \begin{equation*}
+    \sum_{k=0}^\infty \alpha_k = \infty, \quad \sum_{k=0}^\infty \alpha_k^2 < \infty
+  \end{equation*}
+\end{itemize}
+
+The iteration is a gradient-like update with a time-varying time gain $\alpha_k$ that can be taken to be $\alpha_k = \frac{1}{k}$. At each iteration, $q$ is updated using a statistically decreasing (in absolute value) contribution $\alpha_k e(q_k)$: is $\alpha_k$ decreasing too slowly, the convergence to $q^\star$ is slow (in the case $\alpha_k=\alpha$ is a constant, no convergence occurs); is $\alpha_k$ decreasing too fast (\textit{e.g.} $\alpha_k=\tfrac{1}{k^2}$), the sequence $\{q_k\}$ converges to a wrong value that depends on the initial value of the sequence.
+
+A better intuition of how this algorithm works would be a good idea.
+
+
+\subsection{TD Learning (SARSA)}
+\label{sec:TD-learning-sarsa}
+
+The idea behind the SARSA algorithm is to use the empirical evaluation of the TD error eq.~\eqref{eq:TD-error} to update the $Q$ function via the stochastic approximation iteration eq.~\eqref{eq:TD-error-iterative-solution} (why is the sign $+$?)
+\begin{equation}
+  \label{eq:TD-learning-iterative-update}
+  Q(x_k,u_k) \leftarrow Q(x_k,u_k) + \alpha_k\left(r_k + \gamma Q(x_{k+1},u_{k+1}) - Q(x_k,u_k)\right)
+\end{equation}
+The SARSA algorithm interleaves policy evaluation with policy improvement: at every time $k$, it
+\begin{itemize}
+\item selects $u_k$ via an $\epsilon$-greedy policy eq.~\eqref{eq:epsilon-greedy-policy-improvement} based on the latest estimate of $Q(x_k,u_k)$; and
+\item performs the iterative update eq.~\eqref{eq:TD-learning-iterative-update} using a constant $\alpha_k = \alpha$ (which would lead to a steady-state non-zero variance) while taking $\epsilon\rightarrow 0$ as $k\rightarrow \infty$ to control the convergence of the learning.
+\end{itemize}
+Contrast this with MC learning, where the algorithm needs to wait until the end of the episode to estimate $Q$.
+
+\subsection{TD Learning: $Q$ learning}
+\label{sec:TD-learning-Q-learning}
+
+Value iteration solves the Bellman equation without a policy improvement step. We can apply TD learning directly to Bellman optimality principle because in eq.~\eqref{eq:Q-function-Bellman-optimality}, the optimal action $u$ is the one that minimizes $Q^\star(x^\prime,u)$.
+
+In our case, we hope we can select such $u$ by maintaining an \emph{estimate} of the optimal $Q$ function that is continuously updated from the individual realizations
+\begin{equation*}
+  Q^\star(x_k,u_k) \approx r_k + \gamma \min_{u^\prime} Q^\star(x_{k+1},u^\prime).
+\end{equation*}
+The RHS is the same as the RHS of eq.~\eqref{eq:Q-function-Bellman-optimality} in the limit of an infinitely long episode.
+
+The $Q$ learning algorithm updates the estimate of the $Q$ function using the stochastic approximation
+\begin{equation}
+  \label{eq:Q-learning-stochastic-iterate}
+  Q(x_k,u_k) \leftarrow Q(x_k,u_k) + \alpha_k\left(r_k + \gamma \min_u Q(x_{k+1},u) - Q(x_k,u_k)\right).
+\end{equation}
+There are a few things to notice:
+\begin{itemize}
+\item the next input $u_{k+1}$ does not appear in eq.~\eqref{eq:Q-learning-stochastic-iterate} and the $Q$ update is independently on the action used. $Q$ learning is an \emph{off-policy algorithm} because it learns the best policy even from a random input;
+\item convergence to the optimal $Q$ is guaranteed under the same assumptions as for the stochastic approximation;
+\item the policy is typically updated as $\epsilon$-greedy;
+\item for large state and input spaces, one usually approximate the $Q$ function with linear approximants or neural networks;
+\item the stochastic approximation step eq.~\eqref{eq:Q-learning-stochastic-iterate} is \emph{forward} dynamic programming, going forward in time.
+\end{itemize}
+
+\subsection{$Q$ Learning with Linear Approximant}
+
+The lecture is not clear.
+
+The approach of Sec.~\ref{sec:RL-linear-parametrization} can be applied here too:
+\begin{itemize}
+\item approximate $Q$ by the low-dimensional linear combination eq.~\eqref{eq:Q-linear-parametrization};
+\item minimize the scalar loss function
+  \begin{equation*}
+    \min_\theta \underbrace{\frac{1}{2} \left(\Phi(x,u)\theta - Q^+\right)^2}_{L(\theta)}
+  \end{equation*}
+  where
+  \begin{equation*}
+    Q^+ = R_x^u + \gamma \sum_{x^\prime} P_{x,x^\prime}^u \left(\min_{u^\prime} \Phi^\top(x^\prime,u^\prime)\theta^\star\right)
+  \end{equation*}
+  since the Bellman optimality principle will not in general have a solution in the space spanned by $\Phi$. (Where is the equation coming from? From the projection into the $\mathcal{Q}$ space? If so, why is it scalar?)
+\end{itemize}
+A solution to the minimization is found iteratively, by using a gradient descent
+\begin{equation*}
+  \theta_{k+1} = \theta_k - \alpha \nabla L(\theta_k) = \theta_k - \alpha \left(\Phi^\top\theta_k - Q^+\right)\Phi(x,u)
+\end{equation*}
+Similarly to stochastic approximation, we replace $\alpha$ by $\alpha_k$ and use the individual realization
+\begin{equation*}
+  Q^+\approx r_k + \gamma \min_u \Phi^\top(x_{k+1},u)\theta_k
+\end{equation*}
+as an estimate for $Q^+$.
+
+%Very often, in practice linear approximations are not used and instead are replaced by neural networks that are parametrized by weights and where at each node, a non-linear function produces the node's output. The loss function must be minimized by gradient descent.
+
+
+\begin{comment}
+\section{Are MC and TD Model Free?}
+
+What is needed to know
+
+\begin{itemize}
+\item We assume that the model is not time-dependent;
+\item the state must be known
+\end{itemize}
+
+Is it possible
+
+To control a system one tries a policy
+
+\subsection{Policy Gradient}
+
+In RL there is a subsection called policy gradient methods.
+
+The associated cost
+\begin{equation*}
+  R(\tau) = \sum_{t=0}^T \gamma^t r_t
+\end{equation*}
+A stochastic policy $\pi_\theta(x,u)$ parametrized in $\theta$. The goal is the minimization of the expected cost
+\begin{equation*}
+  J(\theta) := \mathbb{E}_{\tau \pi_\theta}R(\tau) = \sum_\tau P_\theta(\tau) R(\tau)
+\end{equation*}
+where $P_\theta(\tau)$ is the probability that trajectory $\tau$ happens when the policy $\pi_\theta$ is used.
+
+There are two sources of complexity
+\begin{itemize}
+\item there is a sum over all possible trajectories
+\item $\mathbb{P}_\theta(\tau)$ is unknown and depends on both the transition probabilites of the system and the policy $\pi_\theta$.§
+\end{itemize}
+
+\end{comment}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "notes"
+%%% End:

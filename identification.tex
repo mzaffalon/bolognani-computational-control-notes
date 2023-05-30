@@ -169,7 +169,15 @@ with the Markov parameters along the diagonals. Only for SISO systems is each en
 
 We are seeking a minimal representation of a controllable and observable system. Since both $\mathcal{O}$ and $\mathcal{C}$ are full rank, so must $\mathcal{H}$. The rank $n$ is however unknown: the approach is to construct an extended Hankel matrix $\mathcal{H}_{k,\ell}\in \mathbb{R}^{k\times \ell}$ and choose $k$ and $\ell$ larger than the expected value $n$. In doing so, $\mathcal{H}_{k,\ell}$ will be singular. To determine $n$ we select the largest upper left square minor of $\mathcal{H}_{k,\ell}$ that is non-singular.
 
-This is better explained with an example: consider a frictionless cart
+This is better explained by an example: consider a frictionless cart\footnote{Consider a continuous system described by the first order ODE $x^\prime = \alpha x$. I can approximate the derivative with
+  \begin{equation*}
+    \frac{x(t+h)-x(t)}{h}
+  \end{equation*}
+  but I can as well use the central differences approximation
+  \begin{equation*}
+    \frac{x(t+h)-x(t-h)}{2h};
+  \end{equation*}
+  now the state space is now twice as large! How is the Ho-Kalman algorithm going to pick the correct $n$? Test it with a simulation.}
 \begin{equation*}
   \begin{aligned}
     v_{t+1} &= v_t + u_t \\

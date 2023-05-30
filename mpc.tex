@@ -1,7 +1,7 @@
 \chapter{Model Predictive Control}
 \label{sec:MPC}
 
-Model Predictive Control (MPC), also referred to as receding horizon control, is a process control technique that optimizes a cost function by using a process model for the state evolution with the additional requirements that the control input $\bsu = \{u_0,u_1,\ldots,u_{K-1}\}$ and the states $\bsx = \{x_0,x_1,\ldots,x_{K-1},x_K\}$ also satisfy a set of contraints:
+Model Predictive Control (MPC), also referred to as receding horizon control, is a process control technique that optimizes a cost function by using a process model for the state evolution with the additional requirements that the control input $\bsu = \{u_0,u_1,\ldots,u_{K-1}\}$ and the states $\bsx = \{x_0,x_1,\ldots,x_{K-1},x_K\}$ also satisfy a set of contraints\footnote{Input constraints often represent physical limits: if the controller does not respect the input constraints, the plant will enforce them. This is in contrast with state constraints that are normally desirable. For this reason, MPC are often setup as optimization problems using hard constraints for the input and some sort of soft constraints for the states~\cite{free-book-diehl}.}:
 \begin{equation}
   \label{eq:MPC-general-formulation}
   \begin{aligned}

@@ -1,0 +1,237 @@
+\chapter{Markov Decision Processes}
+\label{chap:markov-decision-processes}
+
+State-space representation of systems characterized by discrete states and by a non-linear update equation are better described by \emph{Markov decision processes} (MDP). An MDP is a problem formulation for modeling sequential decisions guided by rewards under uncertainty in how the system transitions from state to state.
+
+An MDP is characterized by
+\begin{itemize}
+\item a set $\mathcal{X}$ of $N$ states;
+\item a set $\mathcal{U}$ of $M$ control actions;
+\item the time-evolution described by a transition probability function
+  \begin{equation*}
+    P : X\times U\times X \rightarrow [0,1]
+  \end{equation*}
+  where
+  \begin{equation*}
+    P^u_{x,x\prime} = \mathbb{P}[x^\prime |x,u]
+  \end{equation*}
+  is the \emph{probability} to transition to state $x^\prime$ if the MDP is in state $x$ and the input $u$ is applied. The Markov property for probabilistic systems is the extension of the definition for deterministic systems: for every $x^\prime$, the probability $P^u_{x,x\prime}$ depends only on $x$ and $u$ and not on the past system history;
+\item an immediate cost
+  \begin{equation*}
+    r(x,u,x^\prime)
+  \end{equation*}
+  for the transition to state $x^\prime$ given the MPD being in state $x$ and when action $u$ is taken.
+\end{itemize}
+MDP are typically represented by a Markov chain, with states depicted by circles connected by arrows with the corresponding transition probability.
+
+A control policy selects a suitable action $u\in \mathcal{U}$ based on the current state $x\in \mathcal{X}$ of the system. A policy can be deterministic
+\begin{equation*}
+  \mu : \mathcal{X} \rightarrow \mathcal{U}
+\end{equation*}
+or more generally, stochastic
+\begin{equation*}
+  \pi : \mathcal{X} \times \mathcal{U} \rightarrow [0,1].
+\end{equation*}
+where $\pi(x,u) = \mathbb{P}[u|x]$ is the conditional probability of selecting the input action $u$ given that the MDP is in state $x$. A deterministic policy is a special case of a stochastic one, taking on the probability value $1$ for the action $u$ that the deterministic policy would select and $0$ for all others.
+
+An optimal policy is deterministic\footnote{Explain why.}, but for intermediate steps it is useful to work with stochastic policies.
+
+The stage cost at time $k$ for the states transition from $x_k$ to $x_{k+1}$ under the action $u_k$ is
+\begin{equation*}
+  r_k = r(x_k,u_k,x_{k+1}).
+\end{equation*}
+The quantity we want to control is $\sum_{k=0}^K r_k$: in particular we want to find the policy $\bs{\pi}=\{\pi_0,\pi_1,\ldots \pi_K\}$ that minimizes
+\begin{equation*}
+  %V^\pi(x) = \mathbb{E}\left[\sum_{i=0}^K r_i|x_0=x\right]
+  V^\pi(x) = \underset{x_0=x}{\mathbb{E}}\ \sum_{k=0}^K r_k
+\end{equation*}
+given the initial state $x_0=x$.
+
+\section{Dynamic Programming for MDP}
+\label{sec:MDP-dynamic-programming}
+
+In order to solve this problem recursively, we define the accumulated cost
+\begin{equation*}
+  %V_k^\pi(x) = \mathbb{E}\left[\sum_{i=k}^K r_i|x_k=x\right]
+  V_k^\pi(x) = \underset{x_k=x}{\mathbb{E}}\ \sum_{i=k}^K r_k,
+\end{equation*}
+where the average is done on the policies $\{\pi_k, \pi_{k+1},\ldots \pi_K\}$. Since the system is Markovian, backward induction can be used to evaluate $V_k^\pi(x)$:
+\begin{equation}
+  \label{eq:MDP-recursive-value}
+  \begin{aligned}
+    V_k^\pi(x) &= \underset{x_k=x}{\mathbb{E}}\sum_{i=k}^K r_i \\
+               &= \underset{x_k=x}{\mathbb{E}}\left[r_k + \sum_{i=k+1}^K r_i\right] \\
+               &= \sum_u \pi_k(x,u)\sum_{x^\prime} P_{x,x^\prime}^u \left[r(x,u,x^\prime) + \underset{x_{k+1}=x^\prime}{\mathbb{E}}\sum_{i=k+1}^K r_i\right] & \quad (*) \\
+               &= \sum_u \pi_k(x,u)\left[R^u_x + \sum_{x^\prime}P_{x,x^\prime}^u V^\pi_{k+1}(x^\prime)\right]
+               % &= \sum_u \pi_k(x,u)\sum_{x^\prime}P_{x,x^\prime}û \left[r(x,u,x^\prime) +  V^\pi_{k+1}(x^\prime)\right]
+  \end{aligned}
+\end{equation}
+where
+\begin{equation*}
+  % R^u_x = \mathbb{E}[r_k|x_k=x,u_k=u]
+  R^u_x = \sum_{x^\prime} P^u_{x,x^\prime}r(x,u,x^\prime)
+\end{equation*}
+is the averaged immediate cost.
+To compute the average in $(*)$ we need to sum over the possible control actions $u$, each one of them having the probability $P_{x,x^\prime}^u$ to transition the system from $x$ to $x^\prime$. The term in square brackets is the accumulated cost $k+1$ starting from the initial state $x_{k+1}=x^\prime$ and the immediate cost $r(x,u,x^\prime)$.
+
+By Bellman's optimality principle, the optimal cost can be computed recursively using eq.~\eqref{eq:MDP-recursive-value} as a minimization on the action $u$
+\begin{equation*}
+  V_k^\star(x) = \min_\pi \sum_u \pi_k(x,u)\left[R^u_x + \sum_{x^\prime}P_{x,x^\prime}^u V^\star_{k+1}(x^\prime)\right].
+\end{equation*}
+For a finite horizon problem $K$ and starting from the base case $V_K$, at each step $k$ a policy $\pi_k$ is found: under weak conditions\footnote{Which ones?}, the policy is deterministic because the optimum is at one of the corners of the simplex defined by the contraints on the probabilities
+\begin{equation*}
+  \pi(x,u) \ge 0,\qquad \sum_u \pi(x,u) = 1.
+\end{equation*}
+
+\subsection{Complexity for Finite Horizon}
+\label{sec:MDP-complexity-finite-horizon}
+
+We have reduced a stochastic non-linear system and solved by backward induction with linear programming. The price to pay is the increased size of the system of equations to solve: for each time step $k$, the minimization must be done $M$ times, once for each control input $u$, for each of the $N$ states; the policy $\pi_k$at step $k$ reduces to a matrix of size $M\times N$ since the optimal policy is expected to be deterministic.
+
+%For instance if MDP is applied to an inverted pendulum, the discrete state space is obtained by slicing the pendulum angle and the torque applied in discrete values. Assuming that both angle and torque take on 1000 discrete values, at each time step $k$
+
+\section{Infinite Horizon Problem}
+\label{sec:MDP-infinite-horizon}
+
+Most of the time when working with MDP, we typically consider an infinite horizon, making the Markov process stationary with a time-invariant expected cost $R_x^u$ and a time-invariant policy $\pi$.
+
+The infinite-horizon cost is defined to be the quantity
+\begin{equation*}
+  J = \sum_{k=0}^\infty \gamma^k r_k
+\end{equation*}
+where $0 \le \gamma < 1$ is the discount factor, which generates a myopic or long-sighted policy. There are multiple justifications to introduce it:
+\begin{itemize}
+\item from a mathematical perspective, it ensures that the cost is finite;
+\item in some problems, it accounts for the lower impact of future costs. For instance it is economically advantageous to delay spanding a sum of money that can be instead invested at a guaranteed base rate $\gamma$;
+\item it maps to the Bernoulli termination problem?, with $1-\gamma$ being the termination probability;
+\item for the extreme case $\gamma = 0$, only the immediate cost is considered;
+\item $0<\gamma <1$ achieves a balance between immediate and future cost.
+\end{itemize}
+
+\subsection{Closed-Loop MDP}
+
+For a state-space system with linear dynamics $\dot{x} = Ax+Bu$, the feedback law $u=-Kx$ reduces the system dynamics to the closed loop response
+\begin{equation*}
+  \dot{x} = (A-BK)x.
+\end{equation*}
+Similarly, for an MDP, given the policy $\pi$, the dynamics reduces to a Markov chain where the closed-loop transition probabilities can be expressed by
+\begin{equation*}
+  P^\pi _{x,x^\prime} = \sum_u \mathbb{P}[u|x] \mathbb{P}[x^\prime|x,u] = \sum_u \pi(x,u) P_{x,x^\prime}^u
+\end{equation*}
+Let $\mathtt{P}^\pi = \sum_u \pi(x,u) P_{x,x^\prime}^u\in \mathbb{R}^{N\times N}$. Since it represents transition probabilities, $\mathtt{P}^\pi$ rows must sum to $1$. Moreover, from the Perron-Frobenious, its eigenvalues have modulus 1.
+
+At time $k$, the system will be in state $x$ with probability distribution $d_k(x)$, which depends on $\pi$; the distribution evolves as the linear equation
+\begin{equation*}
+  d_{k+1}^\top = d_k^\top \mathtt{P}^\pi.
+\end{equation*}
+Since the horizon is infinite, we are interested in the stationary distribution $d(x)$ that satisfies
+\begin{equation*}
+  d^\top = d^\top \mathtt{P}^\pi.
+\end{equation*}
+
+\section{Computational Complexity of the Bellman Equation}
+\label{sec:MDP-computation-complexity-bellman-eq}
+
+The infinite horizon value of a policy can be expressed recursively similar to eq.~\eqref{eq:MDP-recursive-value} with no $k$ dependence since policy and optimal cost are stationary
+\begin{equation}
+  \label{eq:MDP-recursive-value-infinite-horizon}
+  V^\pi(x) = \sum_u \pi(x,u)\left[R^u_x + \gamma \sum_{x^\prime}P^u_{x,x^\prime} V^\pi(x^\prime)\right]
+\end{equation}
+and with the discount term $\gamma$. The proof is similar to that for eq.~\eqref{eq:MDP-recursive-value}.
+
+If the minimum is achieved at a deterministic policy, this is equivalent to
+\begin{equation*}
+  V^\star = \min_u \left[R^u_x + \gamma \sum_{x^\prime}P^u_{x,x^\prime} V^\pi(x^\prime)\right]
+\end{equation*}
+is a system of $N$ non-linear equations.
+
+
+There are different approaches to solving this equation. Here we will consider only two, policy iteration and value iteration.
+
+\subsection{Policy Iteration}
+\label{sec:MDP-policy-iteration}
+
+Eq.~\eqref{eq:MDP-recursive-value-infinite-horizon} is a system of linear equations that can be written in the vector $\mathtt{V}^\pi\in\mathbb{R}^N$ as
+\begin{equation*}
+  \mathtt{V}^\pi = \mathtt{R}^\pi + \gamma \mathtt{P}^\pi \mathtt{V}^\pi
+\end{equation*}
+where $\mathtt{R}^\pi = \sum_u \pi(x,u)R_x^u$ is a $N$ element vector.
+
+Policy evaluation is followed by a policy improvement. An optimal policy can be found using a greedy approach, where the improved policy $\pi^\prime$ is only applied on one step only and the previous policy $\pi$ is used for the computation of $V^\pi(x^\prime)$
+\begin{equation}
+  \label{eq:MDP-policy-improvement}
+  \pi^\prime = \arg \min_\nu \sum_u \nu(x,u)\left[R^u_x + \gamma \sum_{x^\prime}P^u_{x,x^\prime} V^\pi(x^\prime)\right]
+\end{equation}
+
+This greedy improving indeed finds the optimal policy
+\begin{equation*}
+  V^{\pi^\prime}(x) \le V^\pi(x)\ \forall x,\quad \text{and }\exists x^\prime \text{ such that }V^{\pi^\prime}(x) < V^\pi(x)
+\end{equation*}
+unless $\pi$ is already the optimal policy.
+
+Proof:
+If $\pi^\prime$ is the policy improving on $\pi$, eq.~\eqref{eq:MDP-policy-improvement}, one has
+\begin{align*}
+  V^\pi(x) &\ge \sum_u \pi^\prime(x,u)\left[R^u_x + \gamma \sum_{x^\prime}P^u_{x,x^\prime} V^\pi(x^\prime)\right] \\
+           &= \mathbb{E} \left[r_0 + \gamma V^\pi(x_1)\right] \\
+           &\ge \mathbb{E} \left[r_0 + \gamma \left[r_1 + \gamma V^\pi(x_2)\right]\right] = \mathbb{E} \left[r_0 + \gamma r_1 + \gamma^2 V^\pi(x_2)\right] \\
+  &\ge \ldots \\
+  &\ge \mathbb{E} \left[r_0 + \gamma r_1 + \gamma^2 r_2 + \gamma^3 r_3 + \ldots \right] = V^{\pi^\prime}(x)
+\end{align*}
+
+Moreover the optimum is reached in a finite amount of improvements (at most $M\times N$), since there is a finite number of actions and states.
+
+Policy iteration starts by guessing a policy $\pi_0$ and then repeats the two steps until convergence of the policy:
+\begin{itemize}
+\item policy evaluation: compute the value $V$ associated to the policy $\pi$ by solving eq.;
+\item policy update: eq.~\eqref{eq:MDP-policy-improvement}
+\end{itemize}
+
+
+\subsection{Value Iteration}
+\label{sec:MDP-value-iteration}
+
+An alternative approach is to look for a fixed point of the Bellman optimality equation by iterating
+\begin{equation}
+  \label{eq:MDP-value-iteration}
+  V^{(t+1)}(x) = \min_\pi  \sum_u \pi(x,u)\left[R^u_x + \gamma \sum_{x^\prime}P^u_{x,x^\prime} V^{(t)}(x^\prime)\right]
+\end{equation}
+until convergence. Convergence is guaranteed by the observation that
+\begin{equation*}
+  ||V^{(t+1)}-W^{(t+1)}||_\infty \le \gamma ||V^{(t)}-W^{(t)}||_\infty
+\end{equation*}
+where $V^{(t)}$ and $W^{(t)}$ are two value functions. The value iteration converges at rate $\gamma$ to $V^\star$. To see why the condition implies convergence, it is sufficient to take $W^{(t)}(x) = V^\star(x)$ identically, since $V^\star(x)$ is a fixed-point of eq.~\eqref{eq:MDP-value-iteration}. Then $V^{(t)}(x)$ converges to $V^\star(x)$ at rate $\gamma$.
+
+Value iteration starts by guessing a value function $V_0$ and then at each iteration updates the value function using eq.~\eqref{eq:MDP-value-iteration}. At convergence, the optimal policy $\pi^\star$ is computed
+\begin{equation*}
+  \pi^\star = \arg \min_\nu \sum_u \nu(x,u)\left[R^u_x + \gamma \sum_{x^\prime}P^u_{x,x^\prime} V^\pi(x^\prime)\right]
+\end{equation*}
+The computational complexity of value iteration is lower than policy iteration for iteration, because of solving the linear equation but the convergence is only asymptotic. For large discount factors $\gamma$ with long horizon, the convergence is typically very slow.
+
+
+\section{Traffic Light Control Problem}
+\label{sec:MDP-traffic-light-control}
+
+We conclude this section with an example problem of controlling a queue of vehicles at a traffic light. The states are represented by the number of cars waiting, the control actions the lights of the traffic light.
+
+At each time step, there is a probability $p$ that a new car arrives and $1-p$ that the queue length does not grow. We select the deterministic policy $\mu(x)$ that the traffic light turns green as soon as there are 3 cars waiting; we need not consider states with more than 3 cars because these states are never reached being the policy deterministic. Under this policy, the transition probability becomes
+\begin{equation*}
+  P^\pi =
+  \begin{bmatrix}
+    1-p & p & 0 & 0 \\
+    0 & 1-p & p & 0 \\
+    0 & 0 & 1-p & p \\
+    1-p & p & 0 & 0
+  \end{bmatrix}
+\end{equation*}
+The stationary distribution is found by solving the right eigenvector problem corresponding to the eigenvalue $1$ and is $
+\begin{bmatrix}
+  \frac{1-p}{3} & \frac{1}{3} & \frac{1}{3} & \frac{p}{3}
+\end{bmatrix}^\top$.
+
+Compute $\mathtt{V}^\pi$ for this problem.
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "notes"
+%%% End:

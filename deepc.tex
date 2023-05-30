@@ -1,5 +1,5 @@
 \chapter{Data-Enabled Predictive Control}
-\label{sec:deepc}
+\label{chap:deepc}
 
 This lecture presents a data-based representation of a linear system. This description generates valid inputs and outputs without using a state-based representation and avoids system identification based \textit{e.g.} on the Ho-Kalman algorithm.
 
@@ -228,7 +228,7 @@ One can force the $H$ matrix to have rank $n+L$ using the nested optimization
   \min_{\bsu,\bsy,g,\hat{\bsu}_\textrm{data},\hat{\bsy}_\textrm{data}} & \sum_{k=0}^{K-1} g_k(y_k,u_k) + g_K(y_K) \\
   \textrm{subject to } &
                          \begin{aligned}
-                           (\hat{\bsu}_\textrm{data},\hat{\bsy}_\textrm{data}) = &\ \argmin ||\hat{\bsu}_\textrm{data} - \bsu_\textrm{data}||^2 + ||\hat{\bsy}_\textrm{data} - \bsy_\textrm{data}||^2 \\
+                           (\hat{\bsu}_\textrm{data},\hat{\bsy}_\textrm{data}) = &\ \arg \min ||\hat{\bsu}_\textrm{data} - \bsu_\textrm{data}||^2 + ||\hat{\bsy}_\textrm{data} - \bsy_\textrm{data}||^2 \\
                                                                                  & \textrm{subject to } \rank \left(
                                                                                    \begin{bmatrix}
                                                                                      \mathcal{H}_L(\hat{\bsu}_\textrm{data}) \\
@@ -254,7 +254,7 @@ by using the closes points $(\hat{\bsu}_\textrm{data},\hat{\bsy}_\textrm{data})$
 The optimization is computationally hard because the computation of the rank makes the problem non-convex. It can however be simplified by the four following steps:
 \begin{itemize}
 \item impose the additional constraint that $g$ has at most $L+n$ elements: $||g||_0\le L+n$. This is equivalent to the rank and does not therefore alter the original problem;
-\item drop the $\rank$ constraint in eq.~\eqref{eq:deepc-nested-optimization}. The $\argmin$ problem becomes trivial because it picks $(\hat{\bsu}_\textrm{data},\hat{\bsy}_\textrm{data})$ to be $(\bsu_\textrm{data},\bsy_\textrm{data})$ but it may produce an infeasible problem. The problem still returns a finite number of elements for $g$ because of the 0-norm;
+\item drop the $\rank$ constraint in eq.~\eqref{eq:deepc-nested-optimization}. The $\arg \min$ problem becomes trivial because it picks $(\hat{\bsu}_\textrm{data},\hat{\bsy}_\textrm{data})$ to be $(\bsu_\textrm{data},\bsy_\textrm{data})$ but it may produce an infeasible problem. The problem still returns a finite number of elements for $g$ because of the 0-norm;
 \item dispense with the nested optimization altogether, eq.~\eqref{eq:deepc-nested-optimization}, and replace the 0-norm by a 1-norm constraint $||g||_1\le \alpha$. This is the Lasso constraint to the sparsity approach and makes the problem convex. The value of $\alpha$ determines the sparsity of the solution. This value must be tuned, but this introduces no more variables that the previous one, since the state of the system $n$ is (often) not known.
 \item The final step is to remove the 1-norm constraint and add it as a renormalization factor into the optimization function eq.\eqref{eq:deepc-cost-function}
   \begin{equation*}
