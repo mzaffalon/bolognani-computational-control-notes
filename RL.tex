@@ -110,11 +110,11 @@ In both cases, if done ``properly'', each state-action pair is visited infinitel
 \section{Scalability and Parametrization of $Q$}
 \label{sec:RL-Q-parametrization}
 
-The computational complexity of the $Q$ function can become intractable when the state-action space is large, either intrinsically because the system has indeed many states and inputs or as a result of the discretization of a continuous system. The trick is to parametrize the $Q$ function by a small set of basis functions
+The computational complexity of the $Q$ function becomes intractable when the state-action space is large, either because the system has intrinsically many states and inputs or as a result of the discretization of a continuous system. The trick is to parametrize the $Q$ function by a small set of basis functions
 \begin{equation*}
   Q_\theta(x,u),\quad \theta \in\mathbb{R}^d\quad \text{where } d\ll MN
 \end{equation*}
-thereby restricting unnecessary degrees of freedom. A smart parametrization may allow one to guess the $Q$ function also for state-action pairs that have not been observed. In the setting of continuous systems where the basis functions are continuous functions, the parametrization also reduces the initial system to a discrete one.
+thereby restricting unnecessary degrees of freedom. A smart parametrization may allow one to guess the $Q$ function also for state-action pairs that have not been observed. For continuous systems the basis functions are continuous functions and the summation in the Bellman equation must be replaced by integrals; nevertheless the parametrization transforms the initial system into a discrete one.
 
 Prior information on the problem may suggest a smart parametrization. For instance in the LQR case, we assumed that the value function is quadratic in $x$ and $u$ (?). Did not understand the remark from the lecture.
 
@@ -134,7 +134,7 @@ We consider the linear parametrization
 \end{equation}
 where $\phi_\ell(x,u)$ are basis functions. These can be
 \begin{itemize}
-\item polynomials $\{x, u, x^2, u^2, xu,\ldots\}$;
+\item polynomials $\{1, x, u, x^2, u^2, xu,\ldots\}$;
 \item quadratic forms $x^\top A_\ell x$ where $A_\ell$ can be a matrix with only one element different from zero or a set of positive definite matrices;
 \item a set of discrete basis functions\footnote{In the game of Tetris on a board size of $20\times 10$, there are at least $2^{200}$ states, each board position being either empty or occupied. A solution mimicking the human approach has been realized with $d=21$ only.}.
 \end{itemize}
@@ -210,18 +210,19 @@ This part was not clear from the lecture. $\rho$ depends on how often the pair $
 
 We have seen how the policy and value iteration methods require either a model or a full and sufficiently rich trajectory. MC learning forces us to wait until the end of the episode to improve the policy. In this Section, we want to learn the system as the data is collected along a single trajectory while also controlling the system.
 
-In MC learning, to construct the $Q$ function from specific realizations, we could have not made use of Bellman equation, eq.~\eqref{eq:Q-function-policy-evaluation} because this is only satisfied in the limit of infinitely long episode. For a finite episode, the \emph{temporal difference error}, the amount by which Bellman equation is not satisfied,
+In MC learning, to construct the $Q$ function from specific realizations, we could have not made use of Bellman equation, eq.~\eqref{eq:Q-function-policy-evaluation} because this is only satisfied in the limit of infinitely long episode. For a finite episode, the \emph{temporal difference error} is the amount by which Bellman equation is not satisfied,
 \begin{equation}
   \label{eq:TD-error}
-  e_k = r_k + \gamma Q(x_{k+1},u_{k+1}) - Q(x_k,u_k)
+  e = r + \gamma Q(x^\prime,u^\prime) - Q(x,u)
 \end{equation}
-can be evaluated from two subsequent data points
+for two subsequent data points
 \begin{equation*}
-  (x_k,u_k,r_k)\quad (x_{k+1},u_{k+1}).
+  % (x_k,u_k,r_k)\quad (x_{k+1},u_{k+1}).
+  (x,u,r)\quad (x^\prime,u^\prime).
 \end{equation*}
-In general the error $e_k$ is not zero but its average must be, $\mathbb{E}[e_k] = 0$, according to the Bellman equation.
+In general the error $e$ is not zero but its average must be, $\mathbb{E}[e] = 0$, according to the Bellman equation.
 
-An iterative way to find the $Q$ function that solves $\mathbb{E}[e_k] = 0$ is provided by the stochastic approximation. Let $q$ a decision variable (?) and $e(q)$ a random variable for which we want to find $q^\star$ that solves $\mathbb{E}[e(q^\star)]=0$. Then the iteration\footnote{Why the $\leftarrow$ and not simply $=$?}
+An iterative way to find the $Q$ function that solves $\mathbb{E}[e] = 0$ is provided by the stochastic approximation. Let $q$ a decision variable (?) and $e(q)$ a random variable for which we want to find $q^\star$ that solves $\mathbb{E}[e(q^\star)]=0$. Then the iteration\footnote{Why the $\leftarrow$ and not simply $=$?}
 \begin{equation}
   \label{eq:TD-error-iterative-solution}
   q_{k+1} \leftarrow q_k -\alpha_k e(q_k)
@@ -242,17 +243,22 @@ The iteration is a gradient-like update with a time-varying time gain $\alpha_k$
 A better intuition of how this algorithm works would be a good idea.
 
 
-\subsection{TD Learning (SARSA)}
+\subsection{TD Learning: SARSA}
 \label{sec:TD-learning-sarsa}
 
-The idea behind the SARSA algorithm is to use the empirical evaluation of the TD error eq.~\eqref{eq:TD-error} to update the $Q$ function via the stochastic approximation iteration eq.~\eqref{eq:TD-error-iterative-solution} (why is the sign $+$?)
+The SARSA algorithm\footnote{SARSA derives its name from the use in the reinforcement learning community of the tuple
+  \begin{equation*}
+    (s,a,r,s^\prime,a^\prime)
+  \end{equation*}
+  for the update iteration where $s$ and $a$ are the state and action and $s^\prime$ and $a^\prime$ the next state and action.} uses the empirical evaluation of the TD error eq.~\eqref{eq:TD-error} to update the $Q$ function via the stochastic approximation iteration eq.~\eqref{eq:TD-error-iterative-solution}\footnote{Why is the sign $+$? The $\alpha_k$ is also confusing because the index $k$ refers to both the state and the iteration but $\alpha$ is not state-dependent.}
 \begin{equation}
   \label{eq:TD-learning-iterative-update}
-  Q(x_k,u_k) \leftarrow Q(x_k,u_k) + \alpha_k\left(r_k + \gamma Q(x_{k+1},u_{k+1}) - Q(x_k,u_k)\right)
+  % Q(x_k,u_k) \leftarrow Q(x_k,u_k) + \alpha_k\left(r_k + \gamma Q(x_{k+1},u_{k+1}) - Q(x_k,u_k)\right)
+  Q(x,u) \leftarrow Q(x,u) + \alpha_k\left[r + \gamma Q(x^\prime,u^\prime) - Q(x,u)\right]
 \end{equation}
 The SARSA algorithm interleaves policy evaluation with policy improvement: at every time $k$, it
 \begin{itemize}
-\item selects $u_k$ via an $\epsilon$-greedy policy eq.~\eqref{eq:epsilon-greedy-policy-improvement} based on the latest estimate of $Q(x_k,u_k)$; and
+\item selects $u$ via an $\epsilon$-greedy policy eq.~\eqref{eq:epsilon-greedy-policy-improvement} based on the latest estimate of $Q(x,u)$; and
 \item performs the iterative update eq.~\eqref{eq:TD-learning-iterative-update} using a constant $\alpha_k = \alpha$ (which would lead to a steady-state non-zero variance) while taking $\epsilon\rightarrow 0$ as $k\rightarrow \infty$ to control the convergence of the learning.
 \end{itemize}
 Contrast this with MC learning, where the algorithm needs to wait until the end of the episode to estimate $Q$.
@@ -264,14 +270,18 @@ Value iteration solves the Bellman equation without a policy improvement step. W
 
 In our case, we hope we can select such $u$ by maintaining an \emph{estimate} of the optimal $Q$ function that is continuously updated from the individual realizations
 \begin{equation*}
-  Q^\star(x_k,u_k) \approx r_k + \gamma \min_{u^\prime} Q^\star(x_{k+1},u^\prime).
+  % Q^\star(x_k,u_k) \approx r_k + \gamma \min_{u^\prime} Q^\star(x_{k+1},u^\prime)
+  Q^\star(x,u) \approx r + \gamma \min_{u^\prime} Q^\star(x^\prime,u^\prime)
 \end{equation*}
-The RHS is the same as the RHS of eq.~\eqref{eq:Q-function-Bellman-optimality} in the limit of an infinitely long episode.
+because the RHS is the same as the RHS of eq.~\eqref{eq:Q-function-Bellman-optimality} in the limit of an infinitely long episode:
+\begin{equation*}
+  Q^\star(x,u) = \mathbb{E}_{r,x^\prime} \left[r + \gamma \min_{u^\prime} Q^\star(x^\prime,u^\prime)\right].
+\end{equation*}
 
-The $Q$ learning algorithm updates the estimate of the $Q$ function using the stochastic approximation
+The $Q$ learning algorithm updates the estimate of the $Q$ function using the stochastic approximation\footnote{Is $a_k$ also here taken as a constant?}
 \begin{equation}
   \label{eq:Q-learning-stochastic-iterate}
-  Q(x_k,u_k) \leftarrow Q(x_k,u_k) + \alpha_k\left(r_k + \gamma \min_u Q(x_{k+1},u) - Q(x_k,u_k)\right).
+  Q(x,u) \leftarrow Q(x,u) + \alpha_k\left(r + \gamma \min_{u^\prime} Q(x^\prime,u^\prime) - Q(x,u)\right).
 \end{equation}
 There are a few things to notice:
 \begin{itemize}
@@ -284,28 +294,28 @@ There are a few things to notice:
 
 \subsection{$Q$ Learning with Linear Approximant}
 
-The lecture is not clear.
+The lecture is not clear: I believe the loss function is a projection operation but the question was not answered in the forum.
 
 The approach of Sec.~\ref{sec:RL-linear-parametrization} can be applied here too:
 \begin{itemize}
 \item approximate $Q$ by the low-dimensional linear combination eq.~\eqref{eq:Q-linear-parametrization};
-\item minimize the scalar loss function
+\item minimize the loss function
   \begin{equation*}
-    \min_\theta \underbrace{\frac{1}{2} \left(\Phi(x,u)\theta - Q^+\right)^2}_{L(\theta)}
+    \min_\theta \underbrace{\frac{1}{2} \left|\!\left|\Phi(x,u)\theta - Q^+\right|\!\right|^2}_{L(\theta)}
   \end{equation*}
   where
   \begin{equation*}
-    Q^+ = R_x^u + \gamma \sum_{x^\prime} P_{x,x^\prime}^u \left(\min_{u^\prime} \Phi^\top(x^\prime,u^\prime)\theta^\star\right)
+    Q^+ = R_x^u + \gamma \sum_{x^\prime} P_{x,x^\prime}^u \left(\min_{u^\prime} \Phi(x^\prime,u^\prime)\theta^\star\right)
   \end{equation*}
   since the Bellman optimality principle will not in general have a solution in the space spanned by $\Phi$. (Where is the equation coming from? From the projection into the $\mathcal{Q}$ space? If so, why is it scalar?)
 \end{itemize}
-A solution to the minimization is found iteratively, by using a gradient descent
+A solution to the minimization is found iteratively, by using a gradient descent approach
 \begin{equation*}
-  \theta_{k+1} = \theta_k - \alpha \nabla L(\theta_k) = \theta_k - \alpha \left(\Phi^\top\theta_k - Q^+\right)\Phi(x,u)
+  \theta \leftarrow \theta - \alpha \nabla L(\theta) = \theta - \alpha \left(\Phi^\top\theta - Q^+\right)\Phi
 \end{equation*}
 Similarly to stochastic approximation, we replace $\alpha$ by $\alpha_k$ and use the individual realization
 \begin{equation*}
-  Q^+\approx r_k + \gamma \min_u \Phi^\top(x_{k+1},u)\theta_k
+  Q^+\approx r + \gamma \min_{u^\prime} \Phi(x^\prime,u^\prime)\theta
 \end{equation*}
 as an estimate for $Q^+$.
 

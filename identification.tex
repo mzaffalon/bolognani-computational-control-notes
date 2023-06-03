@@ -11,20 +11,31 @@ Obtaining a model requires determining
 \item the dynamics $f(x,u)$ of the system;
 \item the measurement function $h(x,u)$.
 \end{itemize}
-In the rest of this chapter we only consider the case of a noiseless linear time-invariant update and observation.
-
-State space representations are not unique: for instance under the invertible transformation $T$ such that $x=Tw$, the two systems are different
-\begin{equation*}
+In the rest of this chapter we only consider the case of a noiseless linear time-invariant update and observation:
+\begin{equation}
+  \label{eq:sysid-dynamics}
   \begin{aligned}
     x_{t+1} &= Ax_t + Bu_t \\
-    y_t &= Cx_t
-  \end{aligned}\quad \stackrel{x=Tw}{\longrightarrow}\quad
+    y_t &= Cx_t + Du_t.
+  \end{aligned}
+\end{equation}
+% where an initial state $x_0$ evolves according the relationship
+% \begin{equation*}
+%   x_t = \underbrace{A^tx_0}_{\text{initial response}} + \underbrace{\sum_{j=0}^{t-1} A^{t-1-j}Bu_j}_{\text{convolution}}
+% \end{equation*}
+% and the detected output is
+% \begin{equation*}
+%   y_t = CA^tx_0 + \sum_{j=0}^{t-1} CA^{t-1-j}Bu_j + \underbrace{Du_t}_{\text{feed through}}.
+% \end{equation*}
+
+State space representations are not unique: under the invertible transformation $T$ such that $x=Tw$, the system eq.~\eqref{eq:sysid-dynamics} becomes\footnote{I introduce $D$ which is not in the lecture but is in the tutorials.}
+\begin{equation*}
   \begin{aligned}
     w_{t+1} &= T^{-1}ATw_t + T^{-1}Bu_t \\
-    y_t &= CTw_t
+    y_t &= CTw_t + Du_t
   \end{aligned}.
 \end{equation*}
-Nevertheless the input-output behavior, the relation between the input $u$ and the output $y$, remains the same. This can be seen by checking that their response is the same for the same input, \textit{e.g.} an input response
+Nevertheless the input-output behavior, the relation between the input $u$ and the output $y$, remains the same. This can be seen by checking that their response is the same for the same input, \textit{e.g.} an input response applied to the $k$ input
 \begin{equation*}
   u_{k,0} = e_k\delta_t,\quad \delta_t =
   \begin{cases}
@@ -42,16 +53,15 @@ whereas for $w$
 \end{equation*}
 and for both systems, the output $y_t$ is the same,
 \begin{equation*}
-  y_0=0,\ y_1=CBe_k,\ y_2=CABe_k,\ y_3=CA^2Be_k,\ \ldots
+  y_0=De_k,\ y_1=CBe_k,\ y_2=CABe_k,\ y_3=CA^2Be_k,\ \ldots
 \end{equation*}
-%Such a change of coordinates may simplify the description of the problem or facilitate the control.
 
-The sequence above is the response of the system to an impulse at the $k$ input. For a general system with $m$ inputs and $p$ outputs, the sequence of matrices describing the output of the system dynamics
+For a general system with $m$ inputs and $p$ outputs, the sequence of matrices in $R^{p\times m}$ describing the output of the system dynamics
 \begin{equation}
   \label{eq:markov-parameters}
-  CB,\ CAB,\ CA^2B,\ \ldots,\ \in R^{p\times m}
+  \{D,\ CB,\ CAB,\ CA^2B,\ \ldots\}
 \end{equation}
-is called the \emph{Markov parameters}. The matrix element $\left[CA^tB\right]_{ij}$ represent the output $i$ to an unit impulse on the input $j$ after a time $t$.
+is called the \emph{Markov parameters}. The matrix element $\left[CA^tB\right]_{ij}$ represent the output $i$ to an unit impulse on the input $j$ after a time $t>0$.
 
 \subsection{Controllability and Observability}
 \label{sec:controllability-observability}
@@ -60,7 +70,7 @@ Consider the problem of driving a system from $x_0=0$ to a desired $\bar{x}\in \
 \begin{equation*}
   x_1 = Bu_0
 \end{equation*}
-that is, to any state in the image of $B$. In two steps, a control sequence $\{u_0,u_1\}$ will drive the system to
+that is, to any state in the image of $B$. In two steps, the control sequence $\{u_0,u_1\}$ will drive the system to
 \begin{equation*}
   x_2 = Bu_1 + ABu_0
 \end{equation*}
@@ -83,11 +93,11 @@ For a full rank controllability matrix, the desired state $\bar{x}$ can be reach
 \end{equation*}
 by using the control input $\bsu = \mathcal{C}^{-1}\bar{x}$ when the input is scalar or by using the pseudoinverse $\bsu = \mathcal{C}^\dagger\bar{x}$ in the case of a MIMO system, where $\mathcal{C}$ is a fat matrix.
 
-Similarly, consider the problem of detecting the effect of an initial condition $x_0$ in the output of a system. At $t=0$, the output of the system is
+Similarly, consider the problem of detecting the effect of an initial condition $x_0$ on the output of a system with no control input. At $t=0$
 \begin{equation*}
   y_0 = Cx_0
 \end{equation*}
-therefore any $x_0$ in $C$ kernel is non-observable. In one step, the output is
+therefore any $x_0$ in $C$'s kernel is non-observable. At $t=1$, the output is
 \begin{equation*}
   y_1 = CAx_0
 \end{equation*}
@@ -99,7 +109,7 @@ and any $x_0$ in the kernel of $\begin{bmatrix} C \\ CA \end{bmatrix}$ is non-ob
     C \\ CA \\ CA^2 \\ \vdots \\ CA^{n-1}
   \end{bmatrix}
 \end{equation}
-is non-observable. As for the controllability matrix, an additional step, $CA^n$ does not increase $\mathcal{C}$'s row rank because by the Cayley-Hamilton theorem, $A^n$ is a linear combination of $I, A,\ldots, A^{n-1}$.
+is non-observable. As we have seen for the controllability matrix, an additional step, $CA^n$ does not increase $\mathcal{C}$'s row rank because by the Cayley-Hamilton theorem, $A^n$ is a linear combination of $\{I, A,\ldots, A^{n-1}\}$.
 
 We can use the observability matrix to find the initial state $x_0$ given the output sequence $\bsy = \begin{bmatrix}
     y_0 & y_1 & \ldots & y_{n-1}
@@ -169,15 +179,7 @@ with the Markov parameters along the diagonals. Only for SISO systems is each en
 
 We are seeking a minimal representation of a controllable and observable system. Since both $\mathcal{O}$ and $\mathcal{C}$ are full rank, so must $\mathcal{H}$. The rank $n$ is however unknown: the approach is to construct an extended Hankel matrix $\mathcal{H}_{k,\ell}\in \mathbb{R}^{k\times \ell}$ and choose $k$ and $\ell$ larger than the expected value $n$. In doing so, $\mathcal{H}_{k,\ell}$ will be singular. To determine $n$ we select the largest upper left square minor of $\mathcal{H}_{k,\ell}$ that is non-singular.
 
-This is better explained by an example: consider a frictionless cart\footnote{Consider a continuous system described by the first order ODE $x^\prime = \alpha x$. I can approximate the derivative with
-  \begin{equation*}
-    \frac{x(t+h)-x(t)}{h}
-  \end{equation*}
-  but I can as well use the central differences approximation
-  \begin{equation*}
-    \frac{x(t+h)-x(t-h)}{2h};
-  \end{equation*}
-  now the state space is now twice as large! How is the Ho-Kalman algorithm going to pick the correct $n$? Test it with a simulation.}
+This is better explained by an example: consider a time-discrete frictionless cart
 \begin{equation*}
   \begin{aligned}
     v_{t+1} &= v_t + u_t \\
@@ -359,7 +361,7 @@ For the frictionless cart, we obtain
     -1.5470 & -1.1118
   \end{bmatrix}
 \end{equation*}
-The Ho-Kalman algorithm gives a different representation of the matrices $A$, $B$ and $C$\footnote{There is a coordinate transformation $T$ which I cannot find: $A$ is defective: should I be using the Jordan form?} but the same observed dynamics.
+The Ho-Kalman algorithm gives a different representation of the matrices $A$, $B$ and $C$\footnote{There is a coordinate transformation $T$ which I cannot find: $A$ is defective: should I be using the Jordan form?} but the same observed dynamics. (How can I see this?)
 
 Note also that the frictionless cart is only marginally stable as $A$'s eigenvalues are both 1. The approach can be also for unstable systems provided the experiment is stopped before the system becomes irrecoverable. Otherwise, system identification on unstable systems must be performed with feedback stabilization, which is outside this introduction.
 
