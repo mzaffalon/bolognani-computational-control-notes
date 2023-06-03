@@ -20,7 +20,7 @@ An MDP is characterized by
   \begin{equation*}
     r(x,u,x^\prime)
   \end{equation*}
-  for the transition to state $x^\prime$ given the MPD being in state $x$ and when action $u$ is taken.
+  for the transition to state $x^\prime$ given the MDP being in state $x$ and when action $u$ is taken.
 \end{itemize}
 MDP are typically represented by a Markov chain, with states depicted by circles connected by arrows with the corresponding transition probability.
 
@@ -77,11 +77,11 @@ By Bellman's optimality principle, the optimal cost can be computed recursively 
 \begin{equation*}
   V_k^\star(x) = \min_\pi \sum_u \pi_k(x,u)\left[R^u_x + \sum_{x^\prime}P_{x,x^\prime}^u V^\star_{k+1}(x^\prime)\right].
 \end{equation*}
-For a finite horizon problem $K$ and starting from the base case $V_K$, at each step $k$ a policy $\pi_k$ is found: under weak conditions\footnote{Which ones?}, the policy is deterministic because the optimum is at one of the corners of the simplex defined by the contraints on the probabilities
+For a finite horizon problem $K$ and starting from the base case $V_K$, at each step $k$ a policy $\pi_k$ is found: under weak conditions\footnote{Which ones?}, the policy is deterministic because the optimum is at one of the corners of the simplex defined by the constraints on the probabilities
 \begin{equation*}
   \pi(x,u) \ge 0,\qquad \sum_u \pi(x,u) = 1.
 \end{equation*}
-Not sure about this one: the plot in class was given without labelling the axes.
+Not sure about this one: the plot in class was given without labeling the axes.
 
 \subsection{Complexity for Finite Horizon}
 \label{sec:MDP-complexity-finite-horizon}
@@ -98,9 +98,9 @@ Most of the time when working with MDP, we consider an infinite horizon, making 
 The infinite-horizon cost is defined to be the quantity
 \begin{equation}
   \label{eq:MDP-infinite-horizon-cost}
-  J = \sum_{k=0}^\infty \gamma^k r_k
+  \sum_{k=0}^\infty \gamma^k r_k
 \end{equation}
-where $0 \le \gamma < 1$ is the discount factor, which ensures that the cost is finite. The value of $\gamma$ achieves a balance between immediate and future costs and accounts for the lower impact of future costs: $\gamma \approx 0$ generates a myopic policy, $\gamma \approx 1$ a long-sighted one; for the extreme case $\gamma = 0$, only the immediate cost is considered.
+where $0 \le \gamma < 1$ is the discount factor, which ensures that the cost is finite\footnote{Without a discount factor the sum of the rewards can become infinite. Suppose that strategy $\pi_1$ results in a reward $1$ for each time step and $\pi_2$ in a reward 100. A rational agent should prefer $\pi_2$ but both strategies have the same infinite cost~\cite{decision-making-kochenderfer}.}. The value of $\gamma$ achieves a balance between immediate and future costs and accounts for the lower impact of future costs: $\gamma \approx 0$ generates a myopic policy, $\gamma \approx 1$ a long-sighted one; for the extreme case $\gamma = 0$, only the immediate cost is considered.
 
 The cost eq.~\eqref{eq:MDP-infinite-horizon-cost} mirrors real-world problems: for instance it is economically advantageous to delay spending an amount of money that can instead be invested at a guaranteed base rate $\gamma$. It also maps to the Bernoulli termination problem (?), with $1-\gamma$ being the termination probability.
 
@@ -126,7 +126,7 @@ When the horizon is infinite, the stationary distribution $d(x)$ satisfies
 \end{equation*}
 
 
-\subsection{A Running Example: Problem Setup and the Stationary Distribution}
+\subsection{Example: The Stationary Distribution for the Traffic Light Problem}
 
 We consider the  example problem of controlling a queue of vehicles at a traffic light. The states are represented by the number of cars waiting, the control actions are the states of the traffic light.
 
@@ -217,11 +217,15 @@ An alternative approach is to look for a fixed point of the Bellman optimality e
   \label{eq:MDP-value-iteration}
   V^{(t+1)}(x) = \min_\pi  \sum_u \pi(x,u)\left[R^u_x + \gamma \sum_{x^\prime}P^u_{x,x^\prime} V^{(t)}(x^\prime)\right]
 \end{equation}
-until convergence. Convergence is guaranteed by the observation that
+until convergence, \textit{i.e.} when the \emph{Bellman residual} falls below a certain threshold $\delta$
+\begin{equation*}
+  |\!| V^{(t+1)} - V^{(t)}|\!|_\infty \le \delta.
+\end{equation*}
+Convergence of the value iteration to $V^\star$ at rate $\gamma$ is guaranteed by the observation that
 \begin{equation*}
   ||V^{(t+1)}-W^{(t+1)}||_\infty \le \gamma ||V^{(t)}-W^{(t)}||_\infty
 \end{equation*}
-where $V^{(t)}$ and $W^{(t)}$ are two value functions. The value iteration converges at rate $\gamma$ to $V^\star$. To see why the condition implies convergence, it is sufficient to take $W^{(t)}(x) = V^\star(x)$ identically, since $V^\star(x)$ is a fixed-point of eq.~\eqref{eq:MDP-value-iteration}. Then $V^{(t)}(x)$ converges to $V^\star(x)$ at rate $\gamma$.
+where $V^{(t)}$ and $W^{(t)}$ are two value functions. To see why the condition implies convergence, it is sufficient to take $W^{(t)}(x) = V^\star(x)$ identically, the fixed-point of eq.~\eqref{eq:MDP-value-iteration}. Then $V^{(t)}(x)$ converges to $V^\star(x)$ at rate $\gamma$.
 
 Value iteration starts by guessing a value function $V_0$ and then at each iteration updates the value function using eq.~\eqref{eq:MDP-value-iteration}. At convergence, the optimal policy $\pi^\star$ is computed
 \begin{equation*}
