@@ -9,7 +9,7 @@ One approach is to split the problem into the offline computation of the steady-
   \text{subject to} &\ x_s = f(x_s,u_s) \\
                  & x\in \mathcal{X},\ u\in \mathcal{U}
 \end{align*}
-and an online MPC to track the steady state $(x_s,u_s)$ using a quadratic cost function $g_k(x_k-x_s,u_k-u_s)$ with minimum at $(x_s,u_s)$
+and an online MPC to track the steady state $(x_s,u_s)$ using a quadratic cost function $g_k(x_k-x_s,u_k-u_s)$ that has the minimum at $(x_s,u_s)$
 \begin{align*}
   \min_{\bsx,\bsu} & \sum_{k=0}^{K-1} g(x_k-x_s,u_k-u_s) \\
   \text{subject to} &\ x_{k+1} = f(x_k,u_k) \\

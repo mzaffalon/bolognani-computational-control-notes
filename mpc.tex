@@ -5,7 +5,7 @@ Model Predictive Control (MPC), also referred to as receding horizon control, is
 \begin{equation}
   \label{eq:MPC-general-formulation}
   \begin{aligned}
-    \min_{\bsx,\bsu} &\sum_{k=0}^{K-1} g_k(x_k,u_k) + g_K(x_K),\\
+    \min_{\bsu} &\sum_{k=0}^{K-1} g_k(x_k,u_k) + g_K(x_K),\\
     \text{subject to } & x_{k+1} = f(x_k,u_k) \\
                      & x_0 = X_0 \\
                      & x_k \in \mathcal{X}_k \\
@@ -15,7 +15,7 @@ Model Predictive Control (MPC), also referred to as receding horizon control, is
 where $X_0$ is the initial state and $g_k$ is a non-negative cost function such as a quadratic one
 \begin{equation}
   \label{eq:quadratic-stage-cost}
-  g_k(x,u) = x^\top Q_k x + u^\top R_k u.
+  g_k(x,u) = ||x||_{Q_k} + ||u||_{R_k} %= x^\top Q_k x + u^\top R_k u.
 \end{equation}
 In the presence of constraints, one cannot find the optimal solution by setting the gradients $\nabla_{u_k} V(\bsx,\bsu)$ of the cost-to-go
 \begin{equation}
@@ -56,10 +56,10 @@ To summarize: MPC is a static\footnote{A static controller has no memory of the 
 
 Despite MPC solving at each time step $i$ the optimal control problem eq.~\eqref{eq:MPC-general-formulation}, the MPC trajectory does not realize the optimal trajectory $\bsu_i^\star$, because MPC only applies the first control input $u_0^\star$ and discards the rest. Consider the pathological problem
 \begin{align*}
-  \min_{\bsu,\bsx} & \sum_{k=0}^{K-1}\frac {1}{k}||u_u|| + ||x(K)||^2\\
+  \min_{\bsu} & \sum_{k=0}^{K-1}\frac {1}{k}||u_u|| + ||x(K)||^2\\
   \text{subject to } &x_{k+1} = x_k+u_k.
 \end{align*}
-The optimal control optimization finds a solution where the first control input $u_0^\star$ must be zero or the cost explodes and delays the work to minimize the cost to go to a later time. By applying only the first control input, MPC will remain stuck in its initial state and the optimal control solution is never realized. This is so also in absence of disturbance and model mismatch.
+The optimization finds a solution where the first control input $u_0^\star$ must be zero or the cost explodes and delays the work to minimize the cost to go to a later time. By applying only the first control input, MPC will remain stuck in its initial state and the optimal control solution is never realized. This is so also in absence of disturbance and model mismatch.
 
 From this example, it is clear that MPC is a way to compute a good controller but in no way a robust optimal controller.
 
@@ -78,16 +78,18 @@ MPC is a principled way to design static, time-invariant, non-linear feedback co
 \subsection{Lyapunov Stability}
 \label{sec:lyapunov-stability}
 
-Definition: The point $x=0$ is stable for the dynamics $x_{k+1} = f(x_k)$ if a small perturbation of the state perturbs the subsequent state trajectory in a continuous manner.
+\begin{definition}
+  The point $x=0$ is \emph{stable} for the dynamics $x_{k+1} = f(x_k)$ if a small perturbation of the state perturbs the subsequent state trajectory in a continuous manner.
 
-In mathematical terms,
-\begin{equation}
-  \label{eq:lyapunov-stability-stable-equilibrium}
-  \forall \epsilon > 0,\ \exists \delta > 0 \text{ such that } ||x_0|| < \delta \rightarrow ||x_k|| < \epsilon\ \forall k \ge 0.
-\end{equation}
-In other words, given a ball of radius $\epsilon$, any trajectory starting from within a ball of radius $\delta$ will never leave the larger ball with radius $\epsilon$.
+  In mathematical terms,
+  \begin{equation}
+    \label{eq:lyapunov-stability-stable-equilibrium}
+    \forall \epsilon > 0,\ \exists \delta > 0 \text{ such that } ||x_0|| < \delta \rightarrow ||x_k|| < \epsilon\ \forall k \ge 0.
+  \end{equation}
+  In other words, given a ball of radius $\epsilon$, any trajectory starting from within a ball of radius $\delta$ will never leave the larger ball with radius $\epsilon$.
 
-An equilibrium is called \emph{asymptotically stable} if it is stable and $\lim_{k\rightarrow \infty} ||x_k||=0$.
+  An equilibrium is called \emph{asymptotically stable} if it is stable and $\lim_{k\rightarrow \infty} ||x_k||=0$.
+\end{definition}
 
 \begin{theorem}[Lyapunov theorem]
   \label{th:lyapunov}
@@ -109,7 +111,7 @@ To prove asymptotically stability of the closed loop problem\footnote{Note that 
 
 We consider first the simpler case of stability for the infinite horizon unconstrained problem. The presence of constraints does not alter the validity of the proof. The function
 \begin{equation*}
-  W(x) = \min_{\bsx,\bsu} \sum_{k=0}^\infty g_k(x_k,u_k).
+  W(x) = \min_{\bsu} \sum_{k=0}^\infty g_k(x_k,u_k).
 \end{equation*}
 is a candidate for the Lyapunov function provided that 1. $W(x)$ is only zero at the target equilibrium (such as when $g_k$ is a quadratic objective function) and 2. that it decreases along trajectories of the system. This is the case because the MPC controller finds $(\bsx^\star, \bsu^\star)$ that minimizes the problem
 \begin{equation*}
@@ -123,7 +125,7 @@ and therefore we have that
 \begin{equation*}
   W(x_{i+1}) = W(x_i) - g_i(x_i,u_0^\star(x_i)) < W(x_i).
 \end{equation*}
-This poses the restriction that $g_k$ is a strictly positive quantity: if a state $\bs{\bar{x}}$ is not weighted in the cost function and $g_k(\bs{\bar{x}})=0$, then $W(x)$ defined above is not strictly decreasing and would not be a Lyapunov function for the asymptotic stability test.
+This poses the restriction that $g_k$ must be a strictly positive quantity: if a state $\bs{\bar{x}}$ is not weighted in the cost function and $g_k(\bs{\bar{x}})=0$, then $W(x)$ defined above is not strictly decreasing and would not be a Lyapunov function for the asymptotic stability test.
 
 For the finite receding MPC problem with horizon length $K$, we only consider the simpler problem of stability for a stage cost $g$ that is independent from the index $k$. The trick above does not apply because at $i+1$, the new cost to go includes the term $g(x_{i+K})$ and excludes $g(x_i)$
 \begin{equation*}
@@ -131,7 +133,7 @@ For the finite receding MPC problem with horizon length $K$, we only consider th
 \end{equation*}
 and there is no guarantee that the requirement
 \begin{equation*}
-  W(x_{i+1}) = \min_{\bsu,\bsx} V^K_{i+1}(\bsu,\bsx) < \min_{\bsu',\bsx'} V^K_i(\bsu',\bsx') = W(x_i)
+  W(x_{i+1}) = \min_{\bsu} V^K_{i+1}(\bsu,\bsx^\prime) < \min_{\bsu'} V^K_i(\bsu') = W(x_i)
 \end{equation*}
 is satisfied.
 
@@ -139,7 +141,7 @@ We can however construct a new optimization problem equal to the original one wi
 \begin{equation}
   \label{eq:lyapunov-tracking-MPC}
   \begin{aligned}
-    W(x) = \min_{\bsu,\bsx} &\quad \sum_{k=0}^{K-1} g(x_k,u_k) \\
+    W(x) = \min_{\bsu} &\quad \sum_{k=0}^{K-1} g(x_k,u_k) \\
     \text{subject to } &\quad x_{k+1} = f(x_k,u_k) \\
                                             &\quad  x_0 = x,\ x_K = 0
   \end{aligned}
@@ -252,7 +254,7 @@ In this example, each constraint defines two (affine) regions and for each regio
 \subsection{Online Computation of the Optimal Control Input}
 \label{sec:online-computation-MPC}
 
-Online computation computes the \textbf{value} $u_0^\star(\cdot)$ at every iteration and therefore it is typically applied to processes that have constraints and mainly used in slow dynamics.
+Online computation computes the \emph{value} $u_0^\star(\cdot)$ at every iteration and therefore it is typically applied to processes that have constraints and mainly used in slow dynamics.
 
 \subsection{Other Practical Implementations Aspects}
 \label{sec:other-practical-implementation-aspects}
@@ -281,16 +283,20 @@ If the desired equilibrium $(x_s, u_s)$ is known in advance, no changes to the M
 
 Sometimes the problem specifies a working point $(x_\text{spec},u_\text{spec})$ so selected because it is safe and/or economic to operate. This working point may not be a valid state, \textit{i.e} it does not satisfy $x_\text{spec} = f(x_\text{spec},u_\text{spec})$. To find the steady-state, one solves offline the optimization problem
 \begin{align*}
-  \min_{u_s,u_s} & ||x_s-x_\text{spec}||_{Q_s}^2 + ||u_s-u_\text{spec}||_{R_s}^2 \\
+  \min_{x_s,u_s} & ||x_s-x_\text{spec}||_{Q_s}^2 + ||u_s-u_\text{spec}||_{R_s}^2 \\
   \text{subject to } & x_s = f(x_s,u_s) \\
                  & x_s \in \mathcal{X},\ u_s \in \mathcal{U}.
 \end{align*}
 
 
-\subsection{Robustness to Perturbations}
-\label{sec:robustness-to-perturbations}
+\subsection{Incremental Formulation of MPC}
+\label{sec:incremental-formulation-MPC}
 
-We have implicitly assumed that we are trying to regulate the steady state $(x_s,u_s) = (0,0)$ but in general, we may be interested in plants that operate at a desiderable working point $x_s\neq 0$. Even in case of perfect plant model $x_{k+1} = f(x_k,u_k)$, a step perturbation cannot be rejected while at the same time reaching the equilibrium point $x=0$ without the presence of an integrator in the plant. Typically an MPC is set up to use input variations $\Delta u_k$ instead of the absolute input $u_k$ only and augments the state space by the control input.
+We have implicitly assumed that we are trying to regulate the steady state $(x_s,u_s) = (0,0)$ but in general, we may be interested in plants that operate at a desiderable working point $x_s\neq 0$.
+
+% We want steady-state tracking error.
+
+Even in case of perfect plant model $x_{k+1} = f(x_k,u_k)$, a step perturbation cannot be rejected while at the same time reaching the equilibrium point $x=0$ without the presence of an integrator in the plant. Typically an MPC is set up to use input variations $\Delta u_k$ instead of the absolute input $u_k$ only and augments the state space by the control input.
 
 In the truck platoon example, keeping the distance to the previous truck constant cannot be relied on only by knowing the (non-linear) relation between gas pedal angle and truck speed, even in presence of feedback. Instead the gas pedal is adjusted to compensate for variations of parameters (engine efficiency, friction, wind gusts\ldots): the controller adjusts $\Delta u_k$ which is integrated to generate the control input $u_k$ that is then fed to the plant. This has also the practical advantage in that it is easier to implement input weights penalizing \emph{changes} in the input signal.
 

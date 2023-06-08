@@ -14,11 +14,11 @@ MPC relies on a model of the system. However the model may not capture the syste
       f(x_k,u_k,z_k) \\ f_z(x_k,u_k,z_k)
     \end{bmatrix}
   \end{equation*}
-  are unknown\footnote{Not clear to me how this differs from the first point where $w_k$ is unknown};
-\item the system is a linear approximation $x_{k+1} = \tilde{A}x_k + \tilde{B}u_k$
-\item time-discretization, quantization, time-varying parameters
+  are unknown;
+\item the system is a linear approximation $x_{k+1} = \tilde{A}x_k + \tilde{B}u_k$ of a non-linear system;
+\item time-discretization, quantization, time-varying parameters\ldots
 \end{itemize}
-We have seen how feedback takes care to some extent of the disturbances. If prior information on the disturbances is available \textit{e.g.}
+We have seen how feedback takes care to some extent of the disturbances. If prior information on the disturbances is available, \textit{e.g.}
 \begin{itemize}
 \item a finite set of discrete disturbances $w_k\in \{w^0, w^1,\ldots, w^p \}$;
 \item the convex hull (the linear combination) of a finite disturbance set, defining a polytope $w_k\in \text{co}\{w^0, w^1,\ldots, w^p \}$;
@@ -51,11 +51,11 @@ We consider in the following linear systems\footnote{It looks like that most of 
 \begin{equation}
   \label{eq:minimization-additive-disturbance}
   \begin{aligned}
-    \min_{\bsx,\bsu} & \left(\max_{\bsw} \sum_{k=0}^{K-1} g_k(x_k,u_k) + g_K(x_K)\right) \\
-    \text{subject to } & x_{k+1} = Ax_k + Bu_k + Dw_k \\
+    \min_{\bsu} & \left(\max_{\bsw} \sum_{k=0}^{K-1} g_k(x_k,u_k) + g_K(x_K)\right) \\
+    \text{subject to } & x_{k+1} = Ax_k + Bu_k + Ew_k \\
                      & x_0 = x \\
-                     & x_k \in \mathcal{X}\quad \forall w \in \mathbb{W} \\
-                     & u_k \in \mathcal{U}
+                     & x_k \in \mathcal{X}_k\quad \forall w \in \mathbb{W} \\
+                     & u_k \in \mathcal{U}_k
   \end{aligned}
 \end{equation}
 Here the minimization is performed on the worst possible set of disturbances as determined by $\max_{\bsw}$, while satisfying the constraints. In other words, we allow the disturbance to pick a value $w_k$ knowing the action $u_k$ in an adversary way.
@@ -64,7 +64,7 @@ Standard MPC may not suffice to solve such problems. Consider the following exam
 \begin{equation}
   \label{eq:rMPC-unfeasible-problem}
   \begin{aligned}
-    \min_{\bsx,\bsu} & \max_{\bsw} \sum_{k=1}^{4} x_k^2+u_k^2 \\
+    \min_{\bsu} & \max_{\bsw} \sum_{k=1}^{4} x_k^2+u_k^2 \\
     \text{subject to } & x_{k+1} = x_k + u_k + w_k \\
                      & |x_k| \le 1,\quad |w_k| \le 0.5
   \end{aligned}
@@ -78,7 +78,7 @@ When the disturbances are either $w_k=+0.5$ or $w_k=-0.5$ for all $k$:
   -3 \le x_0 + \sum_{k=1}^4 u_k \le -1 & \text{ when } w_k=+0.5 \\
   +1 \le x_0 + \sum_{k=1}^4 u_k \le +3 & \text{ when } w_k=-0.5.
 \end{align*}
-no input $\bsu$ satisfies both inequalities. On the other hand, by choosing the closed loop control input $u_k = -x_k$, the dynamics becomes $x_{k+1}=w_k$ and the problem is feasible (because $|x_k|\le 1,\ \forall k$), although possibly not optimal. Standard MPC fails by trying to solve this problem in open loop: it searches a conservative control input $\bsu$ that works for \emph{all} disturbances and feedback is only added at a later stage by using the measured state as the initial state for the new optimization.
+no input $\bsu$ satisfies both inequalities. On the other hand, by choosing the closed loop control input $u_k = -x_k$, the dynamics becomes $x_{k+1}=w_k$ and the problem is feasible, because $|x_k|\le 1,\ \forall k$ irrespectively of the initial condition $|x_0|\le 1$, although possibly not optimal. Standard MPC fails by trying to solve this problem in open loop: it searches a conservative control input $\bsu$ that works for \emph{all} disturbances and feedback is only added at a later stage by using the measured state as the initial state for the new optimization.
 
 \section{Robust Control Requires Closed Loop Optimization}
 \label{sec:closed-loop-robust-control}
@@ -153,9 +153,9 @@ The choice of the parametrization can generate a spectrum of policies: for examp
 \end{equation*}
 We consider here the affine control law $\pi_k(x_k,\bsv) = v_k + Lx_k$ where $L$ is given. The feedback system dynamics is determined by
 \begin{equation*}
-  x_{k+1} = Ax_k + B\underbrace{(v_k+Lx_k)}_{\pi_k(x_k,\bsv)} + Dw_k = (A+BL)x_k + Bv_k + Dw_k
+  x_{k+1} = Ax_k + B\underbrace{(v_k+Lx_k)}_{\pi_k(x_k,\bsv)} + Ew_k = (A+BL)x_k + Bv_k + Ew_k
 \end{equation*}
-where $v_k$ now appears as the effecting control input. With this affine policy, the sequence $\bsv^\star$ is the open-loop optimal policy and the feedback gain $L$ rejects the disturbances $\bsw$. In the case of example \ref{eq:rMPC-unfeasible-problem} the choice $L=-1$ yields the control input $u_k=-x_k+v_k$ and changes the system dynamics to $x_{k+1}=w_k$. It is however not critical to select $L$ because there is still the freedom in choosing the control input $v_k$.
+where $v_k$ now appears as the effective control input. With this affine policy, the sequence $\bsv^\star$ is the open-loop optimal policy while the feedback gain $L$ rejects the disturbances $\bsw$. In the case of example \ref{eq:rMPC-unfeasible-problem} the choice $L=-1$ yields the control input $u_k=-x_k+v_k$ and changes the system dynamics to $x_{k+1}=w_k$. It is however not critical to select $L$ because there is still the freedom in choosing the control input $v_k$.
 
 Note that in the absence of disturbances, there is no advantage in this parametrization because $v_k$ can include the term $Lx_k$ computed for the nominal system trajectory.
 
@@ -170,7 +170,7 @@ and the optimization is done on $\bsM$
 \begin{equation*}
   \begin{aligned}
     \min_{\bsx,\bsM,\bsx} \max_{\bsw} & \sum g(x_k,u_k) + g(x_K) \\
-    %\min_{\bsx,\bsM,\bsx} \max_{\bsw} & \sum x_k^\top Qx_k + u_k^\top Ru_k + x_K^\top Sx_K \\
+    %\min_{\bsx,\bsM,\bsv} \max_{\bsw} & \sum x_k^\top Qx_k + u_k^\top Ru_k + x_K^\top Sx_K \\
     \text{subject to } & x_{k+1} = f(x_k,u_k,w_k) \\
                                       & x_0 = \textrm{x} \\
                                       & x_k \in \mathcal{X}_k\quad \forall \bsw \in \mathbb{W} \\

@@ -175,7 +175,7 @@ The impulse responses of the system are collected as Markov parameters eq.~\eqre
     CA^{n-1}B & \ldots & & & CA^{2n-2}B
   \end{bmatrix}
 \end{equation}
-with the Markov parameters along the diagonals. Only for SISO systems is each entry a scalar, for MIMO systems each entry has size larger than 1 (to specify how much, we should introduce the sizes for $B$ and $C$).
+with the Markov parameters along the diagonals. Only for SISO systems is each entry a scalar, for MIMO systems each entry has size $p\times m$.
 
 We are seeking a minimal representation of a controllable and observable system. Since both $\mathcal{O}$ and $\mathcal{C}$ are full rank, so must $\mathcal{H}$. The rank $n$ is however unknown: the approach is to construct an extended Hankel matrix $\mathcal{H}_{k,\ell}\in \mathbb{R}^{k\times \ell}$ and choose $k$ and $\ell$ larger than the expected value $n$. In doing so, $\mathcal{H}_{k,\ell}$ will be singular. To determine $n$ we select the largest upper left square minor of $\mathcal{H}_{k,\ell}$ that is non-singular.
 

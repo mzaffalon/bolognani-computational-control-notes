@@ -33,11 +33,11 @@ The problem becomes tractable under the following conditions
     V(\bsx,\bsu) = \sum_t g_t(x_t,u_t).
   \end{equation*}
 \end{itemize}
-Under these assumptions, Bellman's principle allows one to solve the optimization problem
+Under these assumptions, Bellman's principle allows one to solve the optimization problem\footnote{In the class notes the minimization is done over both states $\bsx$ and control inputs $\bsu$. In these notes, on the contrary I write the minimization only over $\bsu$, in line with ~\cite{}, since the states $\bsx$ are determined from the initial condition $x_0$ and the system dynmics. The explanation on Moodle justified the use of $\bsx$ from an implementation point of view only.}
 \begin{equation}
   \label{eq:general-optimization-problem}
   \begin{aligned}
-    U(X_0) = \min_{\bsx,\bsu} & \sum_{t=0}^T g_t(x_t,u_t) + g_T(x_T) \\
+    U(X_0) = \min_{\bsu} & \sum_{t=0}^T g_t(x_t,u_t) + g_T(x_T) \\
     \text{subject to } & x_{t+1} = f_t(x_t,u_t)\\
                               & x_o=X_0 \\
                               &x_t \in \mathcal{X}_t\quad \forall t \\
@@ -96,11 +96,12 @@ This quadratic cost function can represent any linear feedback controller $u = -
 \begin{equation*}
   x^\top Qx + u^\top Ru + 2x^\top N u = x^\top \left(\bar{K}^\top \bar{K} + K^\top K - 2 \bar{K}^\top K\right) x = x^\top \left(\bar{K}-K\right)^2x
 \end{equation*}
-this occurs at $K=\bar{K}$.}, linear dynamics and no dynamics
+this occurs at $K=\bar{K}$.}, linear dynamics and no constraints
 \begin{equation}
   \label{eq:LQR-formulation}
   \begin{aligned}
-    \min_{\bsu} & \sum_{t=0}^{T-1} \left(x_t^\top Qx_t + x_t^\top Qx_t\right) + x_T^\top Sx_T,\quad Q,S \succeq 0,\ R \succ 0 \\
+    %\min_{\bsu} & \sum_{t=0}^{T-1} \left(x_t^\top Qx_t + u_t^\top Ru_t\right) + x_T^\top Sx_T,\quad Q,S \succeq 0,\ R \succ 0 \\
+    \min_{\bsu} & \sum_{t=0}^{T-1} \left(||x_t||_Q^2 + ||u_t||_R^2\right) + ||x_T||_S^2,\quad Q,S \succeq 0,\ R \succ 0 \\
     \text{subject to } & x_{t+1} = Ax_t + Bu_t.
   \end{aligned}
 \end{equation}
@@ -153,47 +154,47 @@ There are situations where one wants to maintain a stationary state. This is cap
 \end{equation}
 so that the problem becomes time-invariant and only one feedback matrix $K_\infty$ is required.
 
-The convergence of eq.~\eqref{eq:infinite-horizon-LQR-formulation} is guaranteed by the following observation: if the system is stabilizable\footnote{A system is stabilizable if?}, there is an input sequence that yields a finite cost. To see why, let $u_t = -Kx_t$ a linear feedback such that $A-BK$ has eigenvalues inside the unit circle and $x_t=(A-BK)^tX_0$. The cost to go written as
+The convergence of eq.~\eqref{eq:infinite-horizon-LQR-formulation} is guaranteed by the following observation: if the system is stabilizable\footnote{A system is stabilizable if all uncontrollable state variables can be made to have stable dynamics.}, there is an input sequence that yields a finite cost. To see why, let $u_t = -Kx_t$ a linear feedback such that $A-BK$ has eigenvalues inside the unit circle and $x_t=(A-BK)^tX_0$. The cost to go
 \begin{align*}
-  V(X_0) &= \sum_{t=0}^\infty x_t^\top Qx_t + x_t^\top K^\top RKx_t \\
+  V(X_0) &= \sum_{t=0}^\infty x_t^\top Qx_t^{\phantom{\top}} + x_t^\top K^\top RKx_t \\
          &= X_0^\top \sum_{t=0}^\infty (A-BK)^{t\top}\left(Q+K^\top RK\right)(A-BK)^tX_0
 \end{align*}
 is a geometric converging series.
 
-Since the problem is time-invariant, the feedback law is computed by solving the corresponding ARE, where the subindex $t$ has been dropped from eq.~\eqref{eq:solution-timedependent-ricatti}
+Since the problem is time-invariant, the feedback law is computed by solving the time-invariant ARE with the subindex $t$ dropped in eq.~\eqref{eq:solution-timedependent-ricatti}
 \begin{equation*}
   P = Q + A^\top P A - A^\top P B\left(R + B^\top PB\right)^{-1}B^\top P A
 \end{equation*}
 using \textit{e.g.} an ARE solver or analytically. Note that AREs have multiple solutions and for a controllable system, the \emph{optimal} solution is the matrix $P_\infty$ with the minimum cone. A solver will pick the correct solution. Alternatively, one can iterate eq.~\eqref{eq:solution-timedependent-ricatti} until convergence. It can be proven that the iteration converges to the solution with the smallest cone.
 
-The optimal $K_\infty$ may however not stabilize the system and stabilization happens if and only if all unstable modes are weighted in $Q$:
+The optimal $K_\infty$ does however not stabilize the system unless the uncontrollable modes are stable and the controllable unstable modes\footnote{It looks like $(Q^{1/2},A)$ being detectable should be sufficient, but theorem~8.1 in ``Predictive Control for linear and hybrid systems'' by Borrelli, Bemporad and Morari requires observability of the pair.} are weighted in $Q$:
 \begin{theorem}
-  Let $Q = C C^\top$. The feedback $K_\infty$ stabilizes the system if and only if
-  \begin{equation*}
-    x_{t+1} = Ax_t,\quad y_t = C^\top x_t
-  \end{equation*}
-  does not have unobservable unstable modes.
+  The feedback $K_\infty$ stabilizes the system if and only if $(A,B)$ is stabilizable and $(Q^{1/2},A)$ is observable.
 \end{theorem}
-Indeed the quantity $||y_t||^2 = x_t^\top CC^\top x_t = x_t^\top Qx_t$
-enters the cost function: a feedback law that keeps this quantity finite stabilizes the system.
+The existance of a stabilizing controller $K$ is guaranteed by the fact that $(A,B)$ is stabilizable. Since $(Q^{1/2},A)$ is observable, the unstable states of $A$ appear at the output $y=Q^{1/2}x$, which also enters the objective function as the state dependent term
+\begin{equation*}
+  ||y||^2 = \left(x^\top Q^{1/2}\right)\left(Q^{1/2} x^{\phantom{\top}}\right) = x^\top Qx.
+\end{equation*}
+The convergence of the infinite horizon cost $V$ implies the convergence of $y$ and by stabilizability, the convergence of $x$.
+
 
 \subsection{Stability of the Optimal Controller}
 \label{sec:stability-optimal-controller}
 
 If the system has some unobservable states, the optimal control law $K_\infty$ does not stabilize the system, because optimality of the controller is with respect to the cost function. Consider the unstable system
 \begin{equation*}
-  x_{t+1} =
+  x^+ =
   \begin{bmatrix}
     2 & 0 \\ 0 & 3
-  \end{bmatrix}x_t + u_t, \quad Q =
+  \end{bmatrix}x + u, \quad Q =
   \begin{bmatrix}
     1 & 0 \\ 0 & 0
   \end{bmatrix}, \quad R =
   \begin{bmatrix}
     1 & 0 \\ 0 & 1
-  \end{bmatrix},\quad u_t =-Kx_t
+  \end{bmatrix},\quad u =-Kx
 \end{equation*}
-where the diagonal $A$ matrix has eigenvalues outside of the unit circle. The system can be controlled by an appropriate choice of $K$ but this does not give an optimal solution because acting on the second state incurs a cost, since $R_{22}\neq 0$. There is however no cost associated with letting the second state diverge because $Q_{22}=0$ and the optimal solution will yield zero control input of the second state.
+where the diagonal $A$ matrix has eigenvalues outside of the unit circle, $\lambda=2,3$. The system can be controlled by an appropriate choice of $K$ which cannot not be optimal because acting on the second state incurs a cost, since $R_{22}\neq 0$, while there is no cost associated with letting the second state diverge because $Q_{22}=0$: the optimal solution will therefore yield zero control input of the second state.
 
 However, even if a mode is not stable and not weighted in the cost function, it can still be stabilized with a controller that is suboptimal, by solving the ARE and selecting the \emph{largest} cone solution $P_S$. It can be proven that
 \begin{itemize}
