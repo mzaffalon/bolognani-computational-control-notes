@@ -148,7 +148,8 @@ There are situations where one wants to maintain a stationary state. This is cap
 \begin{equation}
   \label{eq:infinite-horizon-LQR-formulation}
   \begin{aligned}
-    \min_{\bsu} &\sum_{t=0}^\infty \left(x_t^\top Qx_t + u_t^\top Ru_t \right),\quad Q\succeq 0, R\succ 0 \\
+    % \min_{\bsu} &\sum_{t=0}^\infty \left(x_t^\top Qx_t + u_t^\top Ru_t \right),\quad Q\succeq 0, R\succ 0 \\
+\min_{\bsu} &\sum_{t=0}^\infty \left(||x_t||_Q^2 + ||u_t||_R^2 \right),\quad Q\succeq 0, R\succ 0 \\
     \text{subject to } &x_{t+1} = Ax_t + Bu_u,\quad x_0=X_0.
   \end{aligned}
 \end{equation}

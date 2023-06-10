@@ -56,18 +56,25 @@ To summarize: MPC is a static\footnote{A static controller has no memory of the 
 
 Despite MPC solving at each time step $i$ the optimal control problem eq.~\eqref{eq:MPC-general-formulation}, the MPC trajectory does not realize the optimal trajectory $\bsu_i^\star$, because MPC only applies the first control input $u_0^\star$ and discards the rest. Consider the pathological problem
 \begin{align*}
-  \min_{\bsu} & \sum_{k=0}^{K-1}\frac {1}{k}||u_u|| + ||x(K)||^2\\
+  \min_{\bsu} & \sum_{k=0}^{K-1}\frac {1}{k}||u_k||^2 + ||x(K)||^2\\
   \text{subject to } &x_{k+1} = x_k+u_k.
 \end{align*}
 The optimization finds a solution where the first control input $u_0^\star$ must be zero or the cost explodes and delays the work to minimize the cost to go to a later time. By applying only the first control input, MPC will remain stuck in its initial state and the optimal control solution is never realized. This is so also in absence of disturbance and model mismatch.
 
-From this example, it is clear that MPC is a way to compute a good controller but in no way a robust optimal controller.
+From this example, it is clear that MPC is a way to compute a good controller but in no way a robust optimal controller\footnote{Needs explanation: what is a robust optimal controller?}.
 
 \subsection{MPC and Finite-Time LQR}
 \label{sec:MPC-finite-time-LQR}
 
-I did not understand it.
-
+Given the finite-time LQR problem eq.~\eqref{eq:LQR-formulation}, we have seen that the LQR solution computes the matrices $\{P_K, P_{K-1},\ldots P_1\}$ by backward induction and constructs from them the linear feedback law $u=-\Gamma_kx$:
+\begin{equation*}
+  u_0^\textrm{LQR} = -\Gamma_0x_0, \quad u_1^\textrm{LQR} = -\Gamma_1\left(Ax_0+Bu_0^\textrm{LQR}\right), \quad \ldots
+\end{equation*}
+Compare this with the MPC approach\footnote{Why are we comparing a finite horizon finite simulation time LQR with MPC that has an infinite \emph{simulation} time? I did not get the point, aside the obvious one that infinite horizon LQR and MPC give the same result. Either clarify or remove this slide.}: the optimal control solution is the same as that of the LQR, since MPC solves the same problem, and finds the same sequence $\{P_K, P_{K-1},\ldots P_1\}$. MPC however applies the linear \emph{time-invariant} feedback law $x=-\Gamma_0x$:
+\begin{equation*}
+  u_0^\textrm{MPC} = -\Gamma_0x_0, \quad u_1^\textrm{MPC} = -\Gamma_0\left(Ax_0+Bu_0^\textrm{MPC}\right), \quad \ldots
+\end{equation*}
+The feedback law is the same in the case of infinite horizon problems, since the feedback law becomes time invariant also for the LQR problem.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Stability}
@@ -297,6 +304,8 @@ We have implicitly assumed that we are trying to regulate the steady state $(x_s
 % We want steady-state tracking error.
 
 Even in case of perfect plant model $x_{k+1} = f(x_k,u_k)$, a step perturbation cannot be rejected while at the same time reaching the equilibrium point $x=0$ without the presence of an integrator in the plant. Typically an MPC is set up to use input variations $\Delta u_k$ instead of the absolute input $u_k$ only and augments the state space by the control input.
+
+% Even for LQR there is no steady state tracking error.
 
 In the truck platoon example, keeping the distance to the previous truck constant cannot be relied on only by knowing the (non-linear) relation between gas pedal angle and truck speed, even in presence of feedback. Instead the gas pedal is adjusted to compensate for variations of parameters (engine efficiency, friction, wind gusts\ldots): the controller adjusts $\Delta u_k$ which is integrated to generate the control input $u_k$ that is then fed to the plant. This has also the practical advantage in that it is easier to implement input weights penalizing \emph{changes} in the input signal.
 
