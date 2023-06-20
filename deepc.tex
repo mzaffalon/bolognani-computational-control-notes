@@ -27,14 +27,14 @@ or, in matrix form,
     \begin{bmatrix}
       C \\ CA \\ CA^2 \\ \vdots \\ CA^{L-1}
     \end{bmatrix}
-  }_{:=\mathcal{O}_L} x_0 + \underbrace{
+  }_{\doteq\mathcal{O}_L} x_0 + \underbrace{
   \begin{bmatrix}
     D & 0 & 0 & \ldots & 0 \\
     CB & D & 0 & \ldots & 0 \\
     CAB & CB & D & & \vdots \\
     \vdots \\
     CA^{L-2}B & CA^{L-3}B & \ldots & CB & D
-  \end{bmatrix}}_{:=\mathcal{G}_L}
+  \end{bmatrix}}_{\doteq\mathcal{G}_L}
 \begin{bmatrix}
   u_0 \\ u_1 \\ u_2 \\ \vdots \\ u_{L-1}
   \end{bmatrix}
@@ -45,7 +45,7 @@ For the rest of this chapter, we will consider for simplicity SISO systems, $u\i
 
 To keep the notation compact\footnote{Should we have this definition somewhere earlier?}, we will indicate a vector of length $L$ by
 \begin{equation*}
-  \bsw_L :=
+  \bsw_L \doteq
   \begin{bmatrix}
     w_0 \\ w_1 \\ \vdots \\ w_{L-1}
   \end{bmatrix}.
@@ -93,7 +93,7 @@ The matrix $\Lambda_L$ is a full description of the system equivalent to the one
     \bsu_n^{(\textrm{past})} \\ \bsu_K^{(\textrm{future})} \\ x_0
   \end{bmatrix}
 \end{equation*}
-with the matrix $\Lambda_L$ appropriately extended. This can be done, since $\Lambda_L$ has been derived from the state space system matrices and the initial state $x_0$ is either known or can be uniquely derived from the past inputs $\bsu_n^{(\textrm{past})} = \{u_0,\ldots,u_{n-1}\}$ and outputs $\bsy_n^{(\textrm{past})} = \{y_0,\ldots,y_{n-1}\}$.
+with the matrix $\Lambda_L$ appropriately extended. This can be done, since $\Lambda_L$ has been derived from the state space system matrices, and the initial state $x_0$ is either known or can be uniquely derived from the past inputs $\bsu_n^{(\textrm{past})} = \{u_0,\ldots,u_{n-1}\}$ and outputs $\bsy_n^{(\textrm{past})} = \{y_0,\ldots,y_{n-1}\}$.
 
 \section{Behavioral Model Approach}
 \label{sec:behavioral-model-approach}
@@ -129,7 +129,7 @@ Therefore all and the only valid input-output sequences are of the form
 \end{equation*}
 with $g\in\mathbb{R}^{n+L}$. Note that this is effectively a change of coordinates: $g$ is in general not more the vector of control inputs and initial state anymore\footnote{The new matrix $H$ corresponds to $\Lambda_L$ when the experiments are constructed in the following ways: for the first $L$ experiments, the initial condition is 0 and only one input at the time is activated with unit amplitude: for the first experiment, $u_0=\delta_{t-1}$ at time $t=1$, for the second experiment $u_1=\delta_{t-2}$ at time $t=2$\ldots. For the remaining $n$ experiments, the inputs are not activated and one element of the basis of the state space is activated at the time.}.
 
-To construct the matrix $H$ while being able to predict $K$ steps in the future, at least $n+L=2n+K$ trajectories are needed, each of length $L=n+K$. An efficient way to produce the required data is to acquire a \emph{single} experiment of length $2L+n-1$ and to generate $n+L$ synthetic experiments by rearranging the control input sequence $\{u_0, u_1, u_2,\ldots\}$ as the Hankel matrix
+To construct $H$ while being able to predict $K$ steps in the future, at least $n+L=2n+K$ trajectories are needed, each of length $L=n+K$. An efficient way to produce the required data is to acquire a \emph{single} experiment of length $2L+n-1$ and to generate $n+L$ synthetic experiments by rearranging the control input sequence $\{u_0, u_1, u_2,\ldots\}$ as the Hankel matrix
 \begin{equation*}
   \mathcal{H}_L(\bsu) =
   \begin{bmatrix}
@@ -185,7 +185,7 @@ From a computational point of view, this problem is more complex than standard t
 \section{Persistence of Excitation}
 \label{sec:persistence-excitation}
 
-To construct the matrix $H$, the experiment data $(\bsu_\textrm{data},\bsy_\textrm{data})$ must represent the dynamics of the system: dynamics that is not excited cannot be controlled.
+To construct $H$, the experiment data $(\bsu_\textrm{data},\bsy_\textrm{data})$ must represent the dynamics of the system: dynamics that is not excited cannot be controlled.
 
 The identification of unstable systems requires additional care: typically the unstable system is prestabilized and for identification the system is perturbed around this equilibrium point.
 
@@ -255,21 +255,21 @@ One can force the $H$ matrix to have rank $n+L$ using the nested optimization
                                                                            y_k \in \mathcal{Y}_k\ \forall k
                                                                          \end{aligned}
 \end{align}
-by using the closes points $(\hat{\bsu}_\textrm{data},\hat{\bsy}_\textrm{data})$ to the real data $(\bsu_\textrm{data},\bsy_\textrm{data})$ to construct the $H$ matrix. Using a quadratic cost for the nested optimization to remove the noise is arbitrary but a different choice would have made little practical difference.
+by using the closes points $(\hat{\bsu}_\textrm{data},\hat{\bsy}_\textrm{data})$ to the real data $(\bsu_\textrm{data},\bsy_\textrm{data})$ to construct $H$. Using a quadratic cost for the nested optimization to remove the noise is arbitrary but a different choice would make little practical difference.
 
-The optimization is computationally hard because the computation of the rank makes the problem non-convex. It can however be simplified by the four following steps:
+The optimization is computationally hard because the computation of the rank makes the problem non-convex. It can however be simplified by the four following transformations:
 \begin{itemize}
 \item impose the additional constraint that $g$ has at most $L+n$ elements: $||g||_0\le L+n$. This is equivalent to the rank and does not therefore alter the original problem;
 \item drop the $\rank$ constraint in eq.~\eqref{eq:deepc-nested-optimization}. The $\arg \min$ problem becomes trivial because it picks $(\hat{\bsu}_\textrm{data},\hat{\bsy}_\textrm{data})$ to be $(\bsu_\textrm{data},\bsy_\textrm{data})$ but it may produce an infeasible problem. The problem still returns a finite number of elements for $g$ because of the 0-norm;
 \item dispense with the nested optimization altogether, eq.~\eqref{eq:deepc-nested-optimization}, and replace the 0-norm by a 1-norm constraint $||g||_1\le \alpha$. This is the Lasso constraint to the sparsity approach and makes the problem convex. The value of $\alpha$ determines the sparsity of the solution. This value must be tuned, but this introduces no more variables that the previous one, since the state of the system $n$ is (often) not known.
-\item The final step is to remove the 1-norm constraint and add it as a renormalization factor into the optimization function eq.\eqref{eq:deepc-cost-function}
+\item remove the 1-norm constraint and add it as a renormalization factor into the objective function eq.\eqref{eq:deepc-cost-function}
   \begin{equation*}
     \sum_{k=0}^{K-1} g_k(y_k,u_k) + g_K(y_K) + \lambda_g||g||_1.
   \end{equation*}
   A larger $\lambda_g$ increases robustness to noise but affect optimality and corresponds to selecting a model with smaller $n$. The posteriori sparsity $||g||_0$ of $g$ gives information about the model size.
 \end{itemize}
 
-The problem so manipulated
+The problem so transformed
 \begin{equation*}
   \begin{aligned}
     \min_{\bsu,\bsy,g} & \sum_{k=0}^{K-1} g_k(y_k,u_k) + g_K(y_K) + \lambda_g||g||_1 \\

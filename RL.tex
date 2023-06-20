@@ -43,16 +43,15 @@ The SARSA algorithm\footnote{SARSA derives its name from the use in the reinforc
   \begin{equation*}
     (s,a,r,s^\prime,a^\prime)
   \end{equation*}
-  for the update iteration where $s$ and $a$ are the state and action and $s^\prime$ and $a^\prime$ the next state and action.} uses the empirical evaluation of the TD error eq.~\eqref{eq:TD-error} to update the $Q$ function via the stochastic approximation iteration eq.~\eqref{eq:TD-error-iterative-solution}\footnote{Why is the sign $+$? The $\alpha_k$ is also confusing because the index $k$ refers to both the state and the iteration but $\alpha$ is not state-dependent.}
+  for the update iteration where $s$ and $a$ are the state and action and $s^\prime$ and $a^\prime$ the next state and action.} uses the empirical evaluation of the TD error eq.~\eqref{eq:TD-error} to update the $Q$ function via the stochastic approximation iteration eq.~\eqref{eq:TD-error-iterative-solution}\footnote{Why is the sign $+$? In the notes the index $k$ refers to both the state and the iteration number but $\alpha$ is not state-dependent. I remove $k$ for the states.}
 \begin{equation}
   \label{eq:TD-learning-iterative-update}
-  % Q(x_k,u_k) \leftarrow Q(x_k,u_k) + \alpha_k\left(r_k + \gamma Q(x_{k+1},u_{k+1}) - Q(x_k,u_k)\right)
   Q(x,u) \leftarrow Q(x,u) + \alpha_k\left[r + \gamma Q(x^\prime,u^\prime) - Q(x,u)\right]
 \end{equation}
 The SARSA algorithm interleaves policy evaluation with policy improvement: at every time $k$, it
 \begin{itemize}
 \item selects $u$ via an $\epsilon$-greedy policy eq.~\eqref{eq:epsilon-greedy-policy-improvement} based on the latest estimate of $Q(x,u)$; and
-\item performs the iterative update eq.~\eqref{eq:TD-learning-iterative-update} using a constant $\alpha_k = \alpha$ (which would lead to a steady-state non-zero variance) while taking $\epsilon\rightarrow 0$ as $k\rightarrow \infty$ to control the convergence of the learning.
+\item performs the iterative update eq.~\eqref{eq:TD-learning-iterative-update} using a constant $\alpha_k = \alpha$ (which would lead to a steady-state non-zero variance but it is suitable for non-stationary problems) while taking $\epsilon\rightarrow 0$ as $k\rightarrow \infty$ to control the convergence of the learning.
 \end{itemize}
 Contrast this with MC learning, where the algorithm needs to wait until the end of the episode to estimate $Q$.
 
@@ -78,7 +77,7 @@ The $Q$ learning algorithm updates the estimate of the $Q$ function using the st
 \end{equation}
 There are a few things to notice:
 \begin{itemize}
-\item the next input $u_{k+1}$ does not appear in eq.~\eqref{eq:Q-learning-stochastic-iterate} and the $Q$ update is independently on the action used. $Q$ learning is an \emph{off-policy algorithm} because it learns the best policy even from a random input;
+\item the next input $u^\prime$ does not appear in eq.~\eqref{eq:Q-learning-stochastic-iterate} and the $Q$ update is independent on the action used. $Q$ learning is an \emph{off-policy algorithm} because it learns the best policy even from a random input;
 \item convergence to the optimal $Q$ is guaranteed under the same assumptions as for the stochastic approximation;
 \item the policy is typically updated as $\epsilon$-greedy;
 \item for large state and input spaces, one usually approximate the $Q$ function with linear approximants or neural networks;
@@ -100,9 +99,9 @@ The approach of Sec.~\ref{sec:RL-linear-parametrization} can be applied here too
   \begin{equation*}
     Q^+ = R_x^u + \gamma \sum_{x^\prime} P_{x,x^\prime}^u \left(\min_{u^\prime} \Phi(x^\prime,u^\prime)\theta^\star\right)
   \end{equation*}
-  since the Bellman optimality principle will not in general have a solution in the space spanned by $\Phi$. (Where is the equation coming from? From the projection into the $\mathcal{Q}$ space? If so, why is it scalar?)
+  since the Bellman optimality principle will not in general have a solution in the space spanned by $\Phi$. (Where is the equation coming from? From the projection into the $\mathcal{Q}$ space?)
 \end{itemize}
-A solution to the minimization is found iteratively, by using a gradient descent approach
+A solution to the minimization is found iteratively\footnote{Why not solving the linear problem directly? It does not work when the space is too large?}, by using a gradient descent approach
 \begin{equation*}
   \theta \leftarrow \theta - \alpha \nabla L(\theta) = \theta - \alpha \left(\Phi^\top\theta - Q^+\right)\Phi
 \end{equation*}
@@ -140,7 +139,7 @@ The associated cost
 \end{equation*}
 A stochastic policy $\pi_\theta(x,u)$ parametrized in $\theta$. The goal is the minimization of the expected cost
 \begin{equation*}
-  J(\theta) := \mathbb{E}_{\tau \pi_\theta}R(\tau) = \sum_\tau P_\theta(\tau) R(\tau)
+  J(\theta) \doteq \mathbb{E}_{\tau \pi_\theta}R(\tau) = \sum_\tau P_\theta(\tau) R(\tau)
 \end{equation*}
 where $P_\theta(\tau)$ is the probability that trajectory $\tau$ happens when the policy $\pi_\theta$ is used.
 

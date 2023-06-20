@@ -74,7 +74,7 @@ Compare this with the MPC approach\footnote{Why are we comparing a finite horizo
 \begin{equation*}
   u_0^\textrm{MPC} = -\Gamma_0x_0, \quad u_1^\textrm{MPC} = -\Gamma_0\left(Ax_0+Bu_0^\textrm{MPC}\right), \quad \ldots
 \end{equation*}
-The feedback law is the same in the case of infinite horizon problems, since the feedback law becomes time invariant also for the LQR problem.
+In the case of infinite horizon problems, the feedback law is the same, since the feedback law becomes time invariant also for the LQR problem.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Stability}
@@ -288,7 +288,7 @@ If the desired equilibrium $(x_s, u_s)$ is known in advance, no changes to the M
 \subsection{Steady-State Selection from Specifications}
 \label{sec:steady-state-from-specs}
 
-Sometimes the problem specifies a working point $(x_\text{spec},u_\text{spec})$ so selected because it is safe and/or economic to operate. This working point may not be a valid state, \textit{i.e} it does not satisfy $x_\text{spec} = f(x_\text{spec},u_\text{spec})$. To find the steady-state, one solves offline the optimization problem
+Sometimes the problem specifies a working point $(x_\text{spec},u_\text{spec})$ so selected because it is safe and/or economic to operate. This working point may not be a valid state, \textit{i.e} it does not satisfy $x_\text{spec} = f(x_\text{spec},u_\text{spec})$. To find a valid steady-state, one solves offline the optimization problem
 \begin{align*}
   \min_{x_s,u_s} & ||x_s-x_\text{spec}||_{Q_s}^2 + ||u_s-u_\text{spec}||_{R_s}^2 \\
   \text{subject to } & x_s = f(x_s,u_s) \\
@@ -299,13 +299,20 @@ Sometimes the problem specifies a working point $(x_\text{spec},u_\text{spec})$ 
 \subsection{Incremental Formulation of MPC}
 \label{sec:incremental-formulation-MPC}
 
-We have implicitly assumed that we are trying to regulate the steady state $(x_s,u_s) = (0,0)$ but in general, we may be interested in plants that operate at a desiderable working point $x_s\neq 0$.
+A common application of feedback is to compensate for unmeasured disturbances to the system such that the selected controlled variables approach their setpoint asymptotically and without offset, even in the case of perfect plant model $x^+ = f(x,u)$. 
 
-% We want steady-state tracking error.
 
-Even in case of perfect plant model $x_{k+1} = f(x_k,u_k)$, a step perturbation cannot be rejected while at the same time reaching the equilibrium point $x=0$ without the presence of an integrator in the plant. Typically an MPC is set up to use input variations $\Delta u_k$ instead of the absolute input $u_k$ only and augments the state space by the control input.
+a step perturbation cannot be rejected while at the same time reaching the equilibrium point $x=0$ without the presence of an integrator in the plant.
+
+
+The incremental formulation of MPC uses input variations $\Delta u_k$ instead of the absolute input $u_k$ and augments the state space by adding the control input $
+\begin{bmatrix}
+  x & u
+\end{bmatrix}^\top
+$
 
 % Even for LQR there is no steady state tracking error.
+
 
 In the truck platoon example, keeping the distance to the previous truck constant cannot be relied on only by knowing the (non-linear) relation between gas pedal angle and truck speed, even in presence of feedback. Instead the gas pedal is adjusted to compensate for variations of parameters (engine efficiency, friction, wind gusts\ldots): the controller adjusts $\Delta u_k$ which is integrated to generate the control input $u_k$ that is then fed to the plant. This has also the practical advantage in that it is easier to implement input weights penalizing \emph{changes} in the input signal.
 

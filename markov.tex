@@ -7,13 +7,37 @@ An MDP is characterized by
 \begin{itemize}
 \item a set $\mathcal{X}$ of $N$ states;
 \item a set $\mathcal{U}$ of $M$ control actions;
-\item the time-evolution described by a transition probability function
+\item the time-evolution described by a transition probability function\footnote{I increasingly like the notation from~\cite[Sect.~3.1]{reinforcement-learning-sutton-barto} for the model dynamics
+    \begin{equation*}
+      p:\mathcal{X}\times\mathcal{R}\times{X}\times\mathcal{U} \rightarrow [0,1]
+    \end{equation*}
+    such that
+    \begin{equation*}
+      p(x^\prime,r|x,u) \doteq Pr\{S_{t+1}=x^\prime,R_{t+1}=r|S_t=s,A_t=u\}.
+    \end{equation*}
+    The three argument function used in class is defined as
+    \begin{equation*}
+      p(x^\prime|x,u) = \sum_{r\in\mathcal{R}} p(x^\prime,r|x,u);
+    \end{equation*}
+    and the expected reward becomes
+    \begin{equation*}
+      r(x^\prime,x,u) \doteq \mathbb{E}[R_t|S_t=x,A_t=u,S_{t+1}=x^\prime] = \sum_{r\in\mathcal{R}} r \frac{p(x^\prime,r|x,u)}{p(x^\prime|x,u)}.
+    \end{equation*}
+    The Bellman equation is
+    \begin{equation*}
+      V_k^\pi(x) = \sum_u \pi_k(x,u) \sum_{x^\prime,r} p(x^\prime,r|x,u) \left[r+V_{k+1}^\pi(x^\prime)\right]
+    \end{equation*}
+    or, for the infinite horizon,
+    \begin{equation*}
+      V^\pi(x) = \sum_u \pi_k(x,u) \sum_{x^\prime,r} p(x^\prime,r|x,u) \left[r+\gamma V^\pi(x^\prime)\right]
+    \end{equation*}
+    highlighting the quantity $r+\gamma V^\pi(x^\prime)$ similar to that in use in RL.}
   \begin{equation*}
-    P : X\times U\times X \rightarrow [0,1]
+    P : \mathcal{X}\times \mathcal{X}\times \mathcal{U} \rightarrow [0,1]
   \end{equation*}
   where
   \begin{equation*}
-    P^u_{x,x\prime} = \mathbb{P}[x^\prime |x,u]
+    P^u_{x,x^\prime} = \mathbb{P}[x^\prime |x,u]
   \end{equation*}
   is the \emph{probability} to transition to state $x^\prime$ if the MDP is in state $x$ and the input $u$ is applied. The Markov property for probabilistic systems is the extension of the definition for deterministic systems: for every $x^\prime$, the probability $P^u_{x,x\prime}$ depends only on $x$ and $u$ and not on the past system history;
 \item an immediate cost
@@ -32,7 +56,7 @@ or more generally, stochastic
 \begin{equation*}
   \pi : \mathcal{X} \times \mathcal{U} \rightarrow [0,1].
 \end{equation*}
-where $\pi(x,u) = \mathbb{P}[u|x]$ is the conditional probability of selecting the input action $u$ given that the MDP is in state $x$. A deterministic policy is a special case of a stochastic one, taking on the probability value $1$ for the action $u$ that the deterministic policy would select and $0$ for all others. An optimal policy is deterministic\footnote{Explain why.}, but for intermediate steps it is useful to work with stochastic policies.
+where $\pi(x,u)$ is the conditional probability of selecting the input action $u$ given that the MDP is in state $x$. A deterministic policy is a special case of a stochastic one, taking on the probability value $1$ for the action $u$ that the deterministic policy would select and $0$ for all others. An optimal policy is deterministic\footnote{Explain why.}, but for intermediate steps it is useful to work with stochastic policies.
 
 The stage cost at time $k$ for the states transition from $x_k$ to $x_{k+1}$ under the action $u_k$ is
 \begin{equation*}
@@ -51,7 +75,7 @@ given the initial state $x_0=x$.
 In order to solve this problem recursively, we define the accumulated cost
 \begin{equation*}
   %V_k^\pi(x) = \mathbb{E}\left[\sum_{i=k}^K r_i|x_k=x\right]
-  V_k^\pi(x) = \underset{x_k=x}{\mathbb{E}}\ \sum_{i=k}^K r_k,
+  V_k^\pi(x) = \underset{x_k=x}{\mathbb{E}}\ \sum_{i=k}^K r_i,
 \end{equation*}
 where the average is done on the policies $\{\pi_k, \pi_{k+1},\ldots \pi_K\}$. Since the system is Markovian, backward induction can be used to evaluate $V_k^\pi(x)$:
 \begin{equation}
@@ -86,14 +110,14 @@ Not sure about this one: the plot in class was given without labeling the axes.
 \subsection{Complexity for Finite Horizon}
 \label{sec:MDP-complexity-finite-horizon}
 
-We have reduced the original stochastic non-linear system to a linear one and solved by backward induction with linear programming. The price to pay is the increased size of the system of equations to solve: for each time step $k$, the minimization must be done $M$ times, once for each control input $u$, for each of the $N$ states; the policy $\pi_k$at step $k$ reduces to a matrix of size $M\times N$ since the optimal policy is expected to be deterministic.
+We have reduced the original stochastic non-linear system to a linear one and solved by backward induction with linear programming. The price to pay is the increased size of the system of equations to solve: for each time step $k$, the minimization must be done $M$ times, once for each control input $u$, for each of the $N$ states; the policy $\pi_k$ at step $k$ reduces to a matrix of size $M\times N$ since the optimal policy is expected to be deterministic.
 
 %For instance if MDP is applied to an inverted pendulum, the discrete state space is obtained by slicing the pendulum angle and the torque applied in discrete values. Assuming that both angle and torque take on 1000 discrete values, at each time step $k$
 
 \section{Infinite Horizon Problem}
 \label{sec:MDP-infinite-horizon}
 
-Most of the time when working with MDP, we consider an infinite horizon, making the Markov process stationary with a time-invariant expected cost $R_x^u$ and a time-invariant policy $\pi$.
+Most of the time when working with MDP we consider an infinite horizon, making the Markov process stationary with a time-invariant expected cost $R_x^u$ and a time-invariant policy $\pi$.
 
 The infinite-horizon cost is defined to be the quantity
 \begin{equation}

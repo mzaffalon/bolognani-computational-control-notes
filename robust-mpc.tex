@@ -110,7 +110,7 @@ The solution of this dynamic programming problem consists in assuming that $V_k(
 \end{equation*}
 and gives the optimal disturbance $w_k^\star(x)$ and the optimal input $u_k^\star(x)$. For the optimal disturbance, the maximization of the inner problem gives
 \begin{equation*}
-  \hat{w}_k(x,u) = -(D^\top P_{k+1}D-\gamma^2I)^{-1}D^\top P_{k+1} (Ax+Bu) := \Lambda x + \Gamma u
+  \hat{w}_k(x,u) = -(D^\top P_{k+1}D-\gamma^2I)^{-1}D^\top P_{k+1} (Ax+Bu) \doteq \Lambda x + \Gamma u
 \end{equation*}
 where $\hat{w}_k(x,u)$ is a maximum only if the Hessian of the cost to go is negative, that is when
 \begin{equation*}

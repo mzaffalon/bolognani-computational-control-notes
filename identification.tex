@@ -77,7 +77,7 @@ that is, to any state in the image of $B$. In two steps, the control sequence $\
 and therefore to any state in the image of $\begin{bmatrix}B & AB\end{bmatrix}$. In $n$ steps, the system can be driven to any state in the image of the \emph{controllability matrix}
 \begin{equation}
   \label{eq:controllability-matrix}
-  \mathcal{C} :=
+  \mathcal{C} \doteq
   \begin{bmatrix}
     B & AB & A^2B & \ldots & A^{n-1}B
   \end{bmatrix}.
@@ -104,7 +104,7 @@ therefore any $x_0$ in $C$'s kernel is non-observable. At $t=1$, the output is
 and any $x_0$ in the kernel of $\begin{bmatrix} C \\ CA \end{bmatrix}$ is non-observable. In $n$ steps, any initial state in the kernel of the \emph{observability matrix}
 \begin{equation}
   \label{eq:observability-matrix}
-  \mathcal{O} :=
+  \mathcal{O} \doteq
   \begin{bmatrix}
     C \\ CA \\ CA^2 \\ \vdots \\ CA^{n-1}
   \end{bmatrix}
@@ -166,7 +166,7 @@ The Ho-Kalman algorithm allows one to derive a minimal realization of the system
 The impulse responses of the system are collected as Markov parameters eq.~\eqref{eq:markov-parameters}. The Hankel matrix is a banded matrix
 \begin{equation}
   \label{eq:hankel-matrix-definition}
-  \mathcal{H} := \mathcal{O}\mathcal{C} =
+  \mathcal{H} \doteq \mathcal{O}\mathcal{C} =
   \begin{bmatrix}
     CB & CAB & CA^2 B & \ldots & CA^{n-1}B \\
     CAB & CA^2B & \ldots & & CA^nB \\
@@ -332,7 +332,7 @@ and the decomposition gives
 
 $C$ and $B$ are the first entries in $\mathcal{O}_k$ and $\mathcal{C}_\ell$, eq.~\eqref{eq:extended-observability-controllability-matrices}. $A$ can be obtained from the shifted Hankel matrix, obtained discarding the first column of $\mathcal{H}_{k,\ell}$ and adding the subsequent Markov parameters as the last column (or alternatively, discarding the first row and adding the subsequent Markov parameters as the last row)
 \begin{align*}
-  \mathcal{H}_{k,\ell}^\uparrow :=
+  \mathcal{H}_{k,\ell}^\uparrow \doteq
   \begin{bmatrix}
     CAB & CA^2B & CA^3 B & \ldots & CA^\ell B \\
     CA^2B & CA^2B & \ldots & & CA^{\ell+1}B \\
