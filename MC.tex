@@ -147,20 +147,19 @@ where, in matrix form,
   \label{eq:Q-function-matrix}
   \mathcal{B}_\pi(Q) = R + \gamma T^\pi Q.
 \end{equation}
-The \emph{projected Bellman equation} seeks a solution $Q_\theta$ by first projecting $\mathcal{B}(Q_\theta)$ into the subspace $\mathcal{Q}$ using the projection operator
+The approximation method determines the properties of the solution. The \emph{projected Bellman equation} seeks the fixed point of
+\begin{equation}
+  \label{eq:projected-Bellman-equation}
+  Q_\theta = \Pi(\mathcal{B}(Q_\theta)).
+\end{equation}
+where $\mathcal{B}(Q_\theta)$ is the projection operator into the subspace $\mathcal{Q}$
 \begin{equation*}
   \Pi(\mathcal{B}(Q_\theta)) = \arg \min_{Q_{\hat{\theta}}}\ \left|\!\left| Q_{\hat{\theta}} - \mathcal{B}(Q_\theta) \right|\!\right|_\rho^2
 \end{equation*}
 in the $\rho$-norm\footnote{The $\rho$-norm is defined as
 \begin{equation*}
   |\!|v|\!|_\rho^2 = v^\top \rho v.
-\end{equation*}}
-and then looks for the fixed point
-\begin{equation}
-  \label{eq:projected-Bellman-equation}
-  Q_\theta = \Pi(\mathcal{B}(Q_\theta)).
-\end{equation}
-The matrix $\rho$ is a tuning parameter (as long as it is positive definite otherwise it does not define a norm) and may be taken to weight the states differently according to their frequency or because they are of particular interest~\cite[Sect.~11.4]{reinforcement-learning-sutton-barto}.
+\end{equation*}}. The matrix $\rho$ is a tuning parameter and can be freely chosen as long as it is positive definite (or otherwise it would not define a norm).
 
 \begin{theorem}
   The fixed point of the projected Bellman equation is given by
@@ -173,7 +172,6 @@ The matrix $\rho$ is a tuning parameter (as long as it is positive definite othe
 \begin{proof}
   Let $Q_\theta = \Phi \theta$; by eq.~\eqref{eq:Q-function-matrix} we have $\mathcal{B}(Q_\theta) = R + \gamma T^\pi\Phi\theta$. To find $\Pi(B(Q_\theta))$, we compute
   \begin{equation*}
-    %\arg \min_{\hat{\theta}} \frac{1}{2} |\!| \Phi \hat{\theta} - \mathcal{B}(Q_\theta) |\!|^2_\rho =
     \arg \min_{\hat{\theta}} \frac{1}{2} \left|\!\left| \Phi \hat{\theta} - R - \gamma T^\pi \Phi\theta \right|\!\right|^2_\rho
   \end{equation*}
   by setting the gradient with respect to $\hat{\theta}$ to zero, to give
@@ -188,10 +186,15 @@ The matrix $\rho$ is a tuning parameter (as long as it is positive definite othe
   which we can substitute into the equation above. After rearranging the terms, we obtain eq.~\eqref{eq:Q-function-projected-solution}.
 \end{proof}
 
-Eq.~\eqref{eq:Q-function-projected-solution} requires the model information contained in $T^\pi$. One can however contruct the matrices $\Phi^\top\rho\Phi$, $\Phi^\top\rho R$ and $\Phi^\top\rho T^\pi\Phi$ from the episodes/trajectories, and so have a model free approach, by making use of the freedom to choose $\rho$. If we choose $\rho$ to represent the relative frequency that the state-action pair $(x,u)$ appears in the episode, from the data and the basis function, one can construct the required terms as
+Eq.~\eqref{eq:Q-function-projected-solution} requires the model information $T^\pi$. One can however contruct the matrices $\Phi^\top\rho\Phi$, $\Phi^\top\rho R$ and $\Phi^\top\rho T^\pi\Phi$ from the episodes, and so have a model free approach, by making use of the freedom to choose the norm $\rho$. The Euclidean norm is ruled out on the basis that all states are equally weighted and we are instead interested in a good approximation for states that appear frequently in the trajectory or that are of particular interest~\cite[Sect.~11.4]{reinforcement-learning-sutton-barto}. If we take $\rho$ equal to the relative frequency for which the state-action pair $(x,u)$ appears in the episode, from the trajectory one can therefore construct $\Phi^\top\rho\Phi$ as
 \begin{align*}
-  \Phi^\top\rho\Phi &\approx \frac{1}{K} \sum_{k=1}^K \phi(x_k,u_k)^\top\phi(x_k,u_k) \\
-  \Phi^\top\rho R &\approx \frac{1}{K} \sum_{k=1}^K \phi(x_k,u_k)^\top r_k \\
+  \Phi^\top\rho\Phi &= \sum_{x\in\mathcal{X},u\in\mathcal{U}} \rho(x,u) \phi(x,u)^\top\phi(x,u) \\
+                    &\approx \frac{1}{K} \sum_{k=1}^K \phi(x_k,u_k)^\top\phi(x_k,u_k)
+\end{align*}
+and similarly for $\Phi^\top\rho R$ and $\Phi^\top\rho T^\pi\Phi$
+\begin{align*}
+  % \Phi^\top\rho R & = \sum_{x,x^\prime\in\mathcal{X},u\in\mathcal{U}} \rho(x,u) \phi(x,u)^\top r(x,u,x^\prime) \approx \frac{1}{K} \sum_{k=1}^K \phi(x_k,u_k)^\top r_k \\
+\Phi^\top\rho R &\approx \frac{1}{K} \sum_{k=1}^K \phi(x_k,u_k)^\top r_k \\
   \Phi^\top\rho T^\pi\Phi &\approx \frac{1}{K} \sum_{k=1}^K \phi(x_k,u_k)^\top\phi(x_{k+1},u_{k+1}).
 \end{align*}
 

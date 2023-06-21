@@ -15,10 +15,10 @@ for two subsequent data points
 \end{equation*}
 In general the error $e$ is not zero but its average must be, $\mathbb{E}[e] = 0$, according to the Bellman equation.
 
-An iterative way to find the $Q$ function that solves $\mathbb{E}[e] = 0$ is provided by the stochastic approximation. Let $q$ a decision variable (?) and $e(q)$ a random variable for which we want to find $q^\star$ that solves $\mathbb{E}[e(q^\star)]=0$. Then the iteration\footnote{Why the $\leftarrow$ and not simply $=$? This is how it was written in the lecture, asked on Moodle, no answer yet.}
+An iterative way to find the $Q$ function that solves $\mathbb{E}[e] = 0$ is provided by the stochastic approximation. Let $q$ a decision variable (?) and $e(q)$ a random variable for which we want to find $q^\star$ that solves $\mathbb{E}[e(q^\star)]=0$. Then the iteration\footnote{The lecture had it $q_{k+1} \leftarrow q_k -\alpha_k e(q_k)$ but this notation does not make sense.}
 \begin{equation}
   \label{eq:TD-error-iterative-solution}
-  q_{k+1} \leftarrow q_k -\alpha_k e(q_k)
+  q_{k+1} = q_k -\alpha_k e(q_k)
 \end{equation}
 converges to the solution $q^\star$ of $E[e(q)]=0$ provided
 \begin{itemize}

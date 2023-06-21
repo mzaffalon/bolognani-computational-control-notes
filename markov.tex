@@ -13,7 +13,7 @@ An MDP is characterized by
     \end{equation*}
     such that
     \begin{equation*}
-      p(x^\prime,r|x,u) \doteq Pr\{S_{t+1}=x^\prime,R_{t+1}=r|S_t=s,A_t=u\}.
+      p(x^\prime,r|x,u) \doteq Pr\{S_{t+1}=x^\prime,R_{t+1}=r|S_t=x,A_t=u\}.
     \end{equation*}
     The three argument function used in class is defined as
     \begin{equation*}
@@ -29,7 +29,7 @@ An MDP is characterized by
     \end{equation*}
     or, for the infinite horizon,
     \begin{equation*}
-      V^\pi(x) = \sum_u \pi_k(x,u) \sum_{x^\prime,r} p(x^\prime,r|x,u) \left[r+\gamma V^\pi(x^\prime)\right]
+      V^\pi(x) = \sum_u \pi(x,u) \sum_{x^\prime,r} p(x^\prime,r|x,u) \left[r+\gamma V^\pi(x^\prime)\right]
     \end{equation*}
     highlighting the quantity $r+\gamma V^\pi(x^\prime)$ similar to that in use in RL.}
   \begin{equation*}
@@ -187,7 +187,7 @@ and with the discount term $\gamma$. The proof is similar to that for eq.~\eqref
 
 If the minimum is achieved at a deterministic policy, it becomes a system of $N$ non-linear equations:
 \begin{equation*}
-  V^\star = \min_u \left[R^u_x + \gamma \sum_{x^\prime}P^u_{x,x^\prime} V^\star(x^\prime)\right].
+  V^\star(x) = \min_u \left[R^u_x + \gamma \sum_{x^\prime}P^u_{x,x^\prime} V^\star(x^\prime)\right].
 \end{equation*}
 
 We next consider two different approaches to solve this equation: policy iteration and value iteration.
@@ -205,13 +205,13 @@ where $\mathtt{R}^\pi = \sum_u \pi(x,u)R_x^u$ is a $N$ element vector.
 Policy iteration starts by guessing a policy $\pi_0$ and then repeats the two steps until convergence of the policy:
 \begin{itemize}
 \item policy evaluation: compute the value function $V^\pi$ associated to the policy $\pi$ by solving eq.~\eqref{eq:policy-iteration-policy-evaluation};
-\item policy update
+\item policy update by evaluating
   \begin{equation}
     \label{eq:MDP-policy-improvement}
     \pi^\prime = \arg \min_\nu \sum_u \nu(x,u)\left[R^u_x + \gamma \sum_{x^\prime}P^u_{x,x^\prime} V^\pi(x^\prime)\right]
   \end{equation}
 \end{itemize}
-An optimal policy can be indeed be found using the greedy approach of eq.~\eqref{eq:MDP-policy-improvement}, where the improved policy $\pi^\prime$ is only applied on one step only and the previous policy $\pi$ is used for the computation of $V^\pi(x^\prime)$. This greedy improving finds the optimal policy because for any state $x$, it does not make the value function worse and it improves it for at least one state $x^\prime$.
+An optimal policy can be indeed found using the greedy approach of eq.~\eqref{eq:MDP-policy-improvement}, where the improved policy $\pi^\prime$ is only applied on one step only and the previous policy $\pi$ is used for the computation of $V^\pi(x^\prime)$. This greedy improving finds the optimal policy because for any state $x$, it does not make the value function worse and it improves it for at least one state $x^\prime$.
 
 \begin{theorem}
   The policy update eq.~\eqref{eq:MDP-policy-improvement} satisfies
