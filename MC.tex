@@ -147,15 +147,16 @@ where, in matrix form,
   \label{eq:Q-function-matrix}
   \mathcal{B}_\pi(Q) = R + \gamma T^\pi Q.
 \end{equation}
-The approximation method determines the properties of the solution. The \emph{projected Bellman equation} seeks the fixed point of
+The type of approximation determines the properties of the solution\footnote{One approach is to find the fixed point by projection as done in the projected Bellman equation. But what is wrong with finding the minimum of $||Q_\theta - \mathcal{B}_\pi(Q_\theta)||_\rho^2$?}. One such approximated solution is given by the \emph{projected Bellman equation} which seeks the fixed point of
 \begin{equation}
   \label{eq:projected-Bellman-equation}
   Q_\theta = \Pi(\mathcal{B}(Q_\theta)).
 \end{equation}
 where $\mathcal{B}(Q_\theta)$ is the projection operator into the subspace $\mathcal{Q}$
-\begin{equation*}
+\begin{equation}
+  \label{eq:projection-operator-Bellman-equation}
   \Pi(\mathcal{B}(Q_\theta)) = \arg \min_{Q_{\hat{\theta}}}\ \left|\!\left| Q_{\hat{\theta}} - \mathcal{B}(Q_\theta) \right|\!\right|_\rho^2
-\end{equation*}
+\end{equation}
 in the $\rho$-norm\footnote{The $\rho$-norm is defined as
 \begin{equation*}
   |\!|v|\!|_\rho^2 = v^\top \rho v.
@@ -170,20 +171,17 @@ in the $\rho$-norm\footnote{The $\rho$-norm is defined as
   \end{equation}
 \end{theorem}
 \begin{proof}
-  Let $Q_\theta = \Phi \theta$; by eq.~\eqref{eq:Q-function-matrix} we have $\mathcal{B}(Q_\theta) = R + \gamma T^\pi\Phi\theta$. To find $\Pi(B(Q_\theta))$, we compute
+  Let $Q_\theta = \Phi \theta$; by eq.~\eqref{eq:Q-function-matrix} we have $\mathcal{B}(Q_\theta) = R + \gamma T^\pi\Phi\theta$. To find $\Pi(B(Q_\theta))$, we first minimize with respect to $\hat{\theta}$ (instead of $\hat{Q} = \Phi\hat{\theta}$)
   \begin{equation*}
     \arg \min_{\hat{\theta}} \frac{1}{2} \left|\!\left| \Phi \hat{\theta} - R - \gamma T^\pi \Phi\theta \right|\!\right|^2_\rho
   \end{equation*}
-  by setting the gradient with respect to $\hat{\theta}$ to zero, to give
+  by setting the gradient with respect to $\hat{\theta}$ to zero, to find
   \begin{equation*}
-    % \Phi^\top\rho\left(\Phi \hat{\theta} - R - \gamma T^\pi \Phi\theta\right) = 0
     \Phi^\top\rho\Phi \hat{\theta} = \Phi^\top\rho\left(R + \gamma T^\pi \Phi\theta\right).
   \end{equation*}
-  and  $\Pi(B(Q_\theta)) = \Phi\hat{\theta}$. Imposing the fixed point condition eq.~\eqref{eq:projected-Bellman-equation} gives
-  \begin{equation*}
-    \Phi\hat{\theta} = \Phi\theta
-  \end{equation*}
-  which we can substitute into the equation above. After rearranging the terms, we obtain eq.~\eqref{eq:Q-function-projected-solution}.
+  By eq.~\eqref{eq:projection-operator-Bellman-equation}, the projected $\hat{Q}$ is $\Pi(B(Q_\theta)) = \hat{Q} = \Phi\hat{\theta}$.
+
+  Imposing the fixed point condition eq.~\eqref{eq:projected-Bellman-equation} gives $\Phi\hat{\theta} = \Phi\theta$ which we can substitute into the equation above. After rearranging the terms, we obtain eq.~\eqref{eq:Q-function-projected-solution}.
 \end{proof}
 
 Eq.~\eqref{eq:Q-function-projected-solution} requires the model information $T^\pi$. One can however contruct the matrices $\Phi^\top\rho\Phi$, $\Phi^\top\rho R$ and $\Phi^\top\rho T^\pi\Phi$ from the episodes, and so have a model free approach, by making use of the freedom to choose the norm $\rho$. The Euclidean norm is ruled out on the basis that all states are equally weighted and we are instead interested in a good approximation for states that appear frequently in the trajectory or that are of particular interest~\cite[Sect.~11.4]{reinforcement-learning-sutton-barto}. If we take $\rho$ equal to the relative frequency for which the state-action pair $(x,u)$ appears in the episode, from the trajectory one can therefore construct $\Phi^\top\rho\Phi$ as
