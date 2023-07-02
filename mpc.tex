@@ -261,7 +261,7 @@ In this example, each constraint defines two (affine) regions and for each regio
 \subsection{Online Computation of the Optimal Control Input}
 \label{sec:online-computation-MPC}
 
-Online computation computes the \emph{value} $u_0^\star(\cdot)$ at every iteration and therefore it is typically applied to processes that have constraints and mainly used in slow dynamics.
+Online computation computes the \emph{value} $u_0^\star(\cdot)$ at every iteration and therefore it is typically applied to processes that have constraints and mainly used in slow dynamics. Because the reachable state space is orders of magnitude smaller than the full state space, online planning can significantly reduce storage and computational requirements compared to offline methods~\cite[Sect.~9]{decision-making-kochenderfer}.
 
 \subsection{Other Practical Implementations Aspects}
 \label{sec:other-practical-implementation-aspects}

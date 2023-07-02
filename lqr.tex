@@ -96,7 +96,11 @@ This quadratic cost function can represent any linear feedback controller $u = -
 \begin{equation*}
   x^\top Qx + u^\top Ru + 2x^\top N u = x^\top \left(\bar{K}^\top \bar{K} + K^\top K - 2 \bar{K}^\top K\right) x = x^\top \left(\bar{K}-K\right)^2x
 \end{equation*}
-this occurs at $K=\bar{K}$.}, linear dynamics and no constraints
+this occurs at $K=\bar{K}$.}\footnote{Were $Q = Q_S+Q_A$ (or $R$) to have an antisymmetric component $Q_A\doteq\tfrac{1}{2}\left(Q-Q^\top\right)$, this would not contribute to the cost function. Remembering that $Q_A=-Q_A^\top$ and $x^\top Q_Ax = x^\top Q_A^\top x$ since it is a real quantity, one has
+\begin{equation*}
+  x^\top Q_Ax = x^\top Q_A^\top x = -x^\top Q_Ax
+\end{equation*}
+we conclude that $x^\top Q_Ax=0$.}, linear dynamics and no constraints
 \begin{equation}
   \label{eq:LQR-formulation}
   \begin{aligned}
@@ -170,7 +174,11 @@ using \textit{e.g.} an ARE solver or analytically. Note that AREs have multiple 
 
 The optimal $K_\infty$ does however not stabilize the system unless the uncontrollable modes are stable and the controllable unstable modes\footnote{It looks like $(Q^{1/2},A)$ being detectable should be sufficient, but theorem~8.1 in ``Predictive Control for linear and hybrid systems'' by Borrelli, Bemporad and Morari requires observability of the pair.} are weighted in $Q$:
 \begin{theorem}
-  The feedback $K_\infty$ stabilizes the system if and only if $(A,B)$ is stabilizable and $(Q^{1/2},A)$ is observable.
+  The feedback $K_\infty$ stabilizes the system if and only if $(A,B)$ is stabilizable and $(Q^{1/2},A)$ is observable\footnote{In class, the theorem was given for the observability of the pair $(C,A)$ where $Q=CC'$. When $Q$ is symmetric, its SVD has the simpler form $Q = U\Sigma U'$ since
+    \begin{equation*}
+      U\Sigma V = Q = Q' = V\Sigma U'
+    \end{equation*}
+    and $C$ is set to $C \doteq U\sqrt{\Sigma}$.}.
 \end{theorem}
 The existance of a stabilizing controller $K$ is guaranteed by the fact that $(A,B)$ is stabilizable. Since $(Q^{1/2},A)$ is observable, the unstable states of $A$ appear at the output $y=Q^{1/2}x$, which also enters the objective function as the state dependent term
 \begin{equation*}
