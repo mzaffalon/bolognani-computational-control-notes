@@ -62,13 +62,13 @@ Since eMPC can generate semi-periodic trajectories, are these trajectories bette
 \begin{proof}
   The proof relies on the identity eq.~\eqref{eq:eMPC-Lyapunov-like-inequality}, rewritten as
   \begin{equation*}
-    W(x_{i+1}) - W(x_i) \le \ell(x_s,u_s) - \ell(x_i,u_0^\star(x_i))
+    W(x_{k+1}) - W(x_k) \le \ell(x_s,u_s) - \ell(x_k,u_0^\star(x_k))
   \end{equation*}
   Summing the first $N$ terms of the series and dividing by $N$ gives
   \begin{equation*}
-    \frac{1}{N}\sum_{i=0}^{N-1} \left[W(x_{i+1}) - W(x_i)\right] = \underbrace{\frac{W(x_N) - W(x_0)}{N}}_{\rightarrow 0 \text{ when } N\rightarrow 0} \le \frac{1}{N}\sum_{i=0}^{N-1}  \left[\ell(x_s,u_s) - \ell(x_i,u_0^\star(x_i))\right]
+    \frac{1}{N}\sum_{k=0}^{N-1} \left[W(x_{k+1}) - W(x_k)\right] = \underbrace{\frac{W(x_N) - W(x_0)}{N}}_{\rightarrow 0 \text{ when } N\rightarrow 0} \le \frac{1}{N}\sum_{k=0}^{N-1}  \left[\ell(x_s,u_s) - \ell(x_k,u_0^\star(x_k))\right]
   \end{equation*}
-  since the quantity $W(x_N) - W(x_0)$ is bounded. After rearranging the terms, we obtain the expression eq.~\eqref{eq:eMPC-inequality-trajectory-steadystate}.
+  since the quantity $W(x_N) - W(x_0)$ is bounded\footnote{Indeed $W(x)$ is finite and non-negative $\forall x$: this implies $W(x_0) - W(x_N) \leq W(x_0)$.}. After rearranging the terms, we obtain the expression eq.~\eqref{eq:eMPC-inequality-trajectory-steadystate}.
 \end{proof}
 
 %%% Local Variables:

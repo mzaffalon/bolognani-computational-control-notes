@@ -1,0 +1,26 @@
+\chapter{Misc}
+%\label{chap:references}
+
+\section{Math}
+
+\subsection{Derivative of a Quadratic Form}
+\label{sec:derivative-quadratic-form}
+
+The derivative of the quadratic form $x^\top A x$ is to be intended as the directional derivative defined as
+\begin{equation*}
+  D_{\bs{v}} f(\bs{x}) = \lim_{\epsilon \rightarrow 0} \frac{f(\bs{x}+\epsilon\bs{v}) - f(\bs{x})}{\epsilon}
+\end{equation*}
+of the scalar function $f:\mathbb{R}^n\rightarrow \mathbb{R}$. When applied to the quadratic form, one obtains
+\begin{equation}
+  \label{eq:derivative-quadratic-form}
+  \begin{aligned}
+    D_v \left(x^\top A x\right) &= \lim_{\epsilon \rightarrow 0} \frac{(x+\epsilon v)^\top A(x+\epsilon v) - x^\top Ax}{\epsilon} \\
+                                &= v^\top Ax + x^\top Av = x^\top\left(A + A^\top\right)v
+  \end{aligned}
+\end{equation}
+This is a linear form in $v$ and the vector is dropped.
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "notes"
+%%% End:
