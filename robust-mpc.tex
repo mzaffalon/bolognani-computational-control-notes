@@ -100,11 +100,11 @@ because the state is Markovian and by using the past disturbances, it is possibl
 
 Finding a robust optimal closed-loop control policy is often hard; the problem however admits a closed form solution when the state update is linear and the cost quadratic. The soft-constrained LQR has the same cost as LQR
 \begin{equation*}
-  V(x) = \min_{\bsu} \left[\max_{\bsw} \sum_{k=0}^{K-1} x_k^\top Qx_k + u_k^\top R u_k - \gamma^2 w_k^\top w_k + x_K^\top Sx_K\right],\quad Q,S\succeq 0, R\succ 0
+  V(x) = \min_{\bsu} \left[\max_{\bsw} \sum_{k=0}^{K-1} \left(x_k^\top Qx_k + u_k^\top R u_k - \gamma^2 w_k^\top w_k\right) + x_K^\top Sx_K\right],\quad Q,S\succeq 0, R\succ 0
 \end{equation*}
 except for the additional negative cost $-\gamma^2 w_k^\top w_k$. This term works as a soft bound on the energy of the disturbance $w_k$ and is irrelevant in the minimization with respect to $\bsu$ thereby not changing the optimal control input sequence. If $\gamma$ is sufficiently large, $\max_{\bsw}$ makes the problem concave and therefore solvable.
 
-The solution of this dynamic programming problem consists in assuming that $V_k(x) = x^\top P_kx$ is quadratic in $x$, as it was the case for LQR. The resulting Isaac equation is solved by dynamic programming by induction in the same way as it was done for Bellman's equation
+The solution of this dynamic programming problem consists in assuming that $V_k(x) = x^\top P_kx$ is quadratic in $x$, as it was done for LQR. The resulting Isaac equation is solved by dynamic programming in the same way as it was done for Bellman's equation
 \begin{equation*}
   V_k(x) = \min_u \max_w x^\top Qx + u^\top Ru - \gamma^2 w^\top w + V_{k+1}(Ax+Bu+Dw)
 \end{equation*}

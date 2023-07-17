@@ -185,7 +185,11 @@ The infinite horizon value of a policy can be expressed recursively similar to e
 \end{equation}
 and with the discount term $\gamma$. The proof is similar to that for eq.~\eqref{eq:MDP-recursive-value}.
 
-If the minimum is achieved at a deterministic policy, it becomes a system of $N$ non-linear equations:
+If the minimum is achieved at a deterministic policy, it becomes a system of the $N$ \emph{non-linear} equations\footnote{But how can the system be determinimistic if $P_{x,x^\prime}^u$ is still a probabilistic function? Should it not be
+  \begin{equation*}
+    V^\star(x) = \min_u \left[r(x,u,x^+) + \gamma V^\star(x^+)\right].
+  \end{equation*}
+with $x^+ = f(x,u)$? Or is it because of the disturbances?}:
 \begin{equation*}
   V^\star(x) = \min_u \left[R^u_x + \gamma \sum_{x^\prime}P^u_{x,x^\prime} V^\star(x^\prime)\right].
 \end{equation*}
