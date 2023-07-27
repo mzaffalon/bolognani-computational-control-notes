@@ -111,16 +111,21 @@ MPC is a principled way to design static, time-invariant, non-linear feedback co
 \end{theorem}
 A survey of formulation of Lyapunov theory for discrete systems is available at \url{https://arxiv.org/abs/1809.05289}.
 
-\subsection{Stability of MPC}
-\label{sec:stability-MPC}
+\subsection{Stability of Infinite Horizon MPC}
+\label{sec:stability-infinite-horizon-MPC}
 
 To prove asymptotically stability of the closed loop problem\footnote{Note that the open loop is trivially asymptotically stable because it consists of a sequence of finite length $K$.}, we need to find a Lyapunov function $W(x)$ that satisfies theorem~\ref{th:lyapunov}, for the equilibrium point $(x_S,u_S)=(0,0)$.
 
 We consider first the simpler case of stability for the infinite horizon unconstrained problem. The presence of constraints does not alter the validity of the proof. The function
 \begin{equation*}
-  W(x) = \min_{\bsu} \sum_{k=0}^\infty g_k(x_k,u_k).
+  W(x) \doteq \min_{\bsu,\ x_0=x} \sum_{k=0}^\infty g_k(x_k,u_k).
 \end{equation*}
-is a candidate for the Lyapunov function provided that 1. $W(x)$ is only zero at the target equilibrium (such as when $g_k$ is a quadratic objective function) and 2. that it decreases along trajectories of the system. This is the case because the MPC controller finds $(\bsx^\star, \bsu^\star)$ that minimizes the problem
+is a candidate for the Lyapunov function provided that
+\begin{enumerate}[itemsep=-0.5ex]
+\item $W(x)$ is only zero at the target equilibrium (such as when $g_k$ is a quadratic objective function); and
+\item it decreases along trajectories of the system.
+\end{enumerate}
+This is the case because the MPC controller finds $(\bsx^\star, \bsu^\star)$ that minimizes the problem
 \begin{equation*}
   V^\infty_i(\bsx,\bsu) \equiv \sum_{k=i}^\infty g_k(x_k,u_k).
 \end{equation*}
@@ -134,13 +139,16 @@ and therefore we have that
 \end{equation*}
 This poses the restriction that $g_k$ must be a strictly positive quantity: if a state $\bs{\bar{x}}$ is not weighted in the cost function and $g_k(\bs{\bar{x}})=0$, then $W(x)$ defined above is not strictly decreasing and would not be a Lyapunov function for the asymptotic stability test.
 
-For the finite receding MPC problem with horizon length $K$, we only consider the simpler problem of stability for a stage cost $g$ that is independent from the index $k$. The trick above does not apply because at $i+1$, the new cost to go includes the term $g(x_{i+K})$ and excludes $g(x_i)$
+\subsection{Stability of Finite Horizon MPC}
+\label{sec:stability-finite-horizon-MPC}
+
+For the finite receding MPC problem with horizon length $K$, we only consider the simpler problem of stability for a stage cost $g$ that is independent from the index $k$. The trick above does not apply because at $i+1$, the new cost to go includes the term $g(x_{i+K},u_{i+K})$ and excludes $g(x_i,u_i)$
 \begin{equation*}
   V^K_{i+1}(\bsu,\bsx) = \sum_{k=i+1}^{i+K}g(x_k,u_k) = V_i^K(\bsu,\bsx) + g(x_{i+K},u_{i+K}) - g(x_i,u_i)
 \end{equation*}
 and there is no guarantee that the requirement
 \begin{equation*}
-  W(x_{i+1}) = \min_{\bsu} V^K_{i+1}(\bsu,\bsx^\prime) < \min_{\bsu'} V^K_i(\bsu') = W(x_i)
+  W(x_{i+1}) = \min_{\bsu} V^K_{i+1}(\bsu,\bsx) \stackrel{?}{<} \min_{\bsu'} V^K_i(\bsu^\prime,\bsx^\prime) = W(x_i)
 \end{equation*}
 is satisfied.
 
@@ -155,10 +163,11 @@ We can however construct a new optimization problem equal to the original one wi
 \end{equation}
 based on the intuition that the final state will be close to zero because one is trying to stabilize the system. This is a Lyapunov function if we prove that this is decreasing along a trajectory.
 
-Assume we found the optimal solution $\bsu_i^\star$ to the modified problem for time step $i$ from the initial state $x_{i,0}\neq 0$ that is not already the equilibrium. We construct the suboptimal control input $\bsu_{i+1}$ obtained by taking the optimal solution $\bsu_i^\star$, removing $u_{i,0}^\star$ and adding as the last input $u_{i+1,K-1} = 0$. Using $\bsu_{i+1}$, the trajectory $\bsx_{i+1}$ coincides with $\bsx_i^\star$: in particular, $x_{i+1,K-1}=x_{i,K}^\star=x_K=0$ because of the constraint imposed in eq.~\eqref{eq:lyapunov-tracking-MPC}. The final state\footnote{This does not seem to be relevant for the proof.}
+Assume we found the optimal solution $\bsu_i^\star$ to the modified problem for time step $i$ from the initial state $x_{i,0}\neq 0$ that is not already the equilibrium. We construct the suboptimal control input $\bsu_{i+1}$ obtained by taking the optimal solution $\bsu_i^\star$, removing $u_{i,0}^\star$ and adding as the last input $u_{i+1,K-1} = 0$. Using $\bsu_{i+1}$, the trajectory $\bsx_{i+1}$ coincides with $\bsx_i^\star$: in particular, $x_{i+1,K-1}=x_{i,K}^\star=x_K=0$ because of the constraint imposed in eq.~\eqref{eq:lyapunov-tracking-MPC}. The final state
 \begin{equation*}
-  x_{i+1,K} = Ax_{i+1,K-1}+Bu_{i+1,K-1} = 0.
+  x_{i+1,K} = f(x_{i+1,K-1},u_{i+1,K-1}) = 0
 \end{equation*}
+satisfies automatically the boundary condition.
 
 $\bsu_{i+1}$ has a lower associated cost than $\bsu_i^\star$ because we have removed the strictly positive $g_k(x_{i,0}^\star,u_{i,0}^\star)$, since $x_{i,0}\neq 0$; conversely, the suboptimal $\bsu_{i+1}$ has a higher (or equal) cost than the optimal solution $\bsu_{i+1}^\star$:
 \begin{align*}
@@ -171,20 +180,32 @@ $\bsu_{i+1}$ has a lower associated cost than $\bsu_i^\star$ because we have rem
 \end{align*}
 This proves that $W(\cdot)$ is a decreasing function on a trajectory.
 
+\begin{example}
+Note that the proof relies on $(x_S,u_S)$ being an equilibrium point for the dynamics, $x_S = f(x_S,u_S)$ \emph{and} a minimum for the cost to go $g$. Consider the MPC problem with cost function $g(x,u)=x^2+u^2$, an horizon of 2 steps and the constraint $x_2=0$ on the terminal state
+\begin{equation*}
+  \begin{aligned}
+    \min_{\{u_0,u_1\}}\ & g(x_0, u_0) + g(x_1, u_1) \\
+    \text{subject to } & x_{k+1} = \tfrac{1}{2}x_k + \tfrac{1}{2}(u_k-1) \\
+                 & x_2 = 0
+  \end{aligned}
+\end{equation*}
+which requires a non-zero input $u=1$ to drive the system to $x=0$ but $(x,u) = (0,1)$ is not a minimum for $g$. Under the optimal control input $u_0^\star = \tfrac{2-x_0}{3}$, the closed loop controller becomes $x^+ = \frac{2x-1}{6}$ which is stable and converges to $(x_\infty,u_\infty)=\left(-\tfrac{1}{4},\tfrac{3}{4}\right)$, despite also the presence of the constraint $x_2=0$. In other words, a constraint on the final state may not be reached.
 
-%\begin{align*}
-%  & W(x_{i+1}) \\
-%  & = V_{i+1}^K(\bsx_{i+1}^\star, \bsu_{i+1}^\star) & \text{definition of $W$} \\
-%             & \leq V_{i+1}^K(\bsx_{i+1}, \bsu_{i+1}) & \text{optimal trajectory} \\
-%             & = \underbrace{V_i^K(\bsx_i^\star, \bsu_i^\star)}_{W(x_i)} - \underbrace{g(x_{i,0},u_{i,0}^\star)}_{>0} + \underbrace{g(x_{i+1,K},u_{i+1,K})}_{=0} & \text{definition of $V_i^K$} \\
-%  & < W(x_i)
-%\end{align*}
+The optimal value function $V^\star(x) = \tfrac{(2x_0-1)^2}{3} + \tfrac{3}{2}$ is not a Lyapunov function because it is not decreasing along a trajectory:
+\begin{equation*}
+  V^\star(x) - V^\star(x^+) = -\tfrac{8}{27}\left(2x-\tfrac{5}{8}\right)^2 + \tfrac{3}{8}.
+\end{equation*}
 
-%Assume we found the optimal solution $\bsu_{i+1}^\star$ to the modified problem for $i+1$: this has a lower (or equal) cost than the suboptimal solution $\bsu_{i+1}$ obtained by taking the optimal solution $\bsu_i^\star$ for step $i$, removing input $u_{i,0}^\star$ and adding as the last input $u_{i+1,K-1} = 0$. Using $\bsu_{i+1}$, the trajectory $\bsx_{i+1}$ coincides with $\bsx_i$. The final state
-%\begin{equation*}
-%  x_{i+1,K} = A\underbrace{x_{i+1,K-1}}_{=x_{i,K}}+Bu_{i+1,K-1} = 0
-%\end{equation*}
-%because the optimal solution at $i$ has the final state constrained at $x_{i,K}=x_K=0$.
+If the problem is modified\footnote{The equilibrium $(x_s,u_s)=(0,1)$ can be moved to $(0,0)$ by a coordinate transformation} such that the cost to go is $g(x,u) = x^2 + (u-1)^2$, the closed loop controller under the optimal action $u_0^\star(x) = -\tfrac{x_0}{3}+1$ becomes
+\begin{equation*}
+  x^+ = \frac{x}{3}
+\end{equation*}
+which has the equilibrium point $(x_s,u_s)=(0,1)$. The optimal value function is quadratic in $x$, $V^\star(x) = \tfrac{4}{3}x^2$, and it is a Lyapunov function because it decreases along trajectories
+\begin{equation*}
+  V^\star(x) - V^\star(x^+) = -\tfrac{32}{27}x^2.
+\end{equation*}
+We conclude that $(x_S,u_S)=(0,1)$ is an asymptotically stable point.
+\end{example}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Implementation of MPC}
