@@ -1,24 +1,58 @@
 \chapter{Misc}
-%\label{chap:references}
+%\label{chap:misc}
+
+% https://github.com/mitmath/matrixcalc
 
 \section{Math}
 
 \subsection{Derivative of a Quadratic Form}
 \label{sec:derivative-quadratic-form}
 
-The derivative of the quadratic form $x^\top A x$ is to be intended as the directional derivative defined as
+The derivative of the quadratic form $x^\top A x$ is to be intended as the linear form $\nabla f(\bs{x})$ satisfying in the limit
 \begin{equation*}
-  D_{\bs{v}} f(\bs{x}) = \lim_{\epsilon \rightarrow 0} \frac{f(\bs{x}+\epsilon\bs{v}) - f(\bs{x})}{\epsilon}
+  f(\bs{x}+\delta\bs{x}) - f(\bs{x}) = \nabla f(\bs{x}) \delta x
 \end{equation*}
-of the scalar function $f:\mathbb{R}^n\rightarrow \mathbb{R}$. When applied to the quadratic form, one obtains
+of the scalar function $f:\mathbb{R}^n\rightarrow \mathbb{R}$.
+
+When applied to the quadratic form $x^\top A x$, one obtains
 \begin{equation}
   \label{eq:derivative-quadratic-form}
   \begin{aligned}
-    D_v \left(x^\top A x\right) &= \lim_{\epsilon \rightarrow 0} \frac{(x+\epsilon v)^\top A(x+\epsilon v) - x^\top Ax}{\epsilon} \\
-                                &= v^\top Ax + x^\top Av = x^\top\left(A + A^\top\right)v
+    & (x+\delta x)^\top A(x+\delta x) - x^\top Ax = \delta x^\top Ax + x^\top A\delta x \\
+    &= x^\top A^\top \delta x + x^\top A\delta x = x^\top\left(A^\top + A\right)\delta x
   \end{aligned}
 \end{equation}
-This is a linear form in $v$ and the vector is dropped.
+where we have used the fact that the transpose of a real number coincides with the number.
+Since this is a linear form in $v$, the vector is implicity intended and dropped and the result is usually given as $x^\top\left(A + A^\top\right)$.
+
+% \section{Terminology}
+% \label{sec:terminology}
+
+
+% \subsubsection{Controllability and Observability/Detectability}
+% \label{sec:controllability}
+
+% Given the linear system
+% \begin{equation*}
+%   \begin{aligned}
+%     x^+ = Ax + Bu \\
+%     y = Cx + Du
+%   \end{aligned}
+% \end{equation*}
+% the system is controllable if
+
+% Controllability is usually given in terms of the matrix
+% \begin{equation*}
+%   \mathcal{C} =
+%   \begin{bmatrix}
+%     A & BA & B^2A & \ldots & B^{n-1}A
+%   \end{bmatrix}
+% \end{equation*}
+% being full rank. Computing $\mathcal{C}$ rank is misleading and unfortunately, I feel it was not sufficiently strongly remarked in class:
+% \begin{itemize}
+% \item The rank is calculated by counting how many singular values of $\mathcal{C}$ are below a certain threshold. The threshold is usually set to be a multiple of the minimum resolution of a floating point number. Usually adding some noise to the matrix elements (or order $10^{-10}$ for Float64) makes the matrix full rank.
+% \item Even computing the SVD 
+% \end{itemize}
 
 %%% Local Variables:
 %%% mode: latex

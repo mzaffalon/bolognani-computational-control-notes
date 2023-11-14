@@ -35,33 +35,38 @@ State space representations are not unique: under the invertible transformation 
     y_t &= CTw_t + Du_t
   \end{aligned}.
 \end{equation*}
-Nevertheless the input-output behavior, the relation between the input $u$ and the output $y$, remains the same. This can be seen by checking that their response is the same for the same input, \textit{e.g.} an input response applied to the $k$ input
+Nevertheless the input-output behavior, the relation between the input $u$ and the output $y$, remains the same. This can be seen by checking that their response is the same for the same input, \textit{e.g.} an input response applied to the $j$ input
 \begin{equation*}
-  u_{k,0} = e_k\delta_t,\quad \delta_t =
+  e_j\delta_t =
   \begin{cases}
-    1 & \text{ for } t=0 \\
+    e_j & \text{ for } t=0 \\
     0 & \text{ otherwise}
   \end{cases}.
 \end{equation*}
-Assuming a system at rest, we have for the state $x$ the dynamics
+Assuming a system at rest, $x_0=0$ under the control input $e_j\delta_t$, the state $x$ has the dynamics
 \begin{equation*}
-  x_0=0,\ x_1=Be_k,\ x_2=ABe_k,\ x_3=A^2Be_k,\ \ldots
+  \begin{aligned}
+    &x_1 = Ax_0+Be_j\delta_t = Be_j \\
+    &x_2 = Ax_1+\cancel{Be_j\delta_t} = ABe_j \\
+    &x_3 = Ax_2+\cancel{Be_j\delta_t} = A^2Be_j \\
+    &\hspace{2em}\ldots
+  \end{aligned}
 \end{equation*}
 whereas for $w$
 \begin{equation*}
-  w_0=0,\ w_1=T^{-1}Be_k,\ w_2=T^{-1}ABe_k,\ w_3=T^{-1}A^2Be_k,\ \ldots
+  w_1=T^{-1}Be_j,\ \ w_2=T^{-1}ABe_j,\ \ w_3=T^{-1}A^2Be_j,\ \ldots
 \end{equation*}
 and for both systems, the output $y_t$ is the same,
 \begin{equation*}
   y_0=De_k,\ y_1=CBe_k,\ y_2=CABe_k,\ y_3=CA^2Be_k,\ \ldots
 \end{equation*}
 
-For a general system with $m$ inputs and $p$ outputs, the sequence of matrices in $R^{p\times m}$ describing the output of the system dynamics
+For a general system with $m$ inputs and $p$ outputs, the sequence of $R^{p\times m}$ matrices describing the output of the system dynamics
 \begin{equation}
   \label{eq:markov-parameters}
   \{D,\ CB,\ CAB,\ CA^2B,\ \ldots\}
 \end{equation}
-is called the \emph{Markov parameters}. The matrix element $\left[CA^tB\right]_{ij}$ represent the output $i$ to an unit impulse on the input $j$ after a time $t>0$.
+is called the \emph{Markov parameters}. The matrix element $\left[CA^tB\right]_{ij}$ represents the output $i$ to an unit impulse on the input $j$ after a time $t>0$.
 
 \subsection{Controllability and Observability}
 \label{sec:controllability-observability}
@@ -155,7 +160,7 @@ We want to derive a state-space representation exclusively from input-output dat
 
 The Ho-Kalman algorithm allows one to derive a minimal realization of the system in the form of the matrices $A$, $B$, $C$ from impulse response data. The algorithm consists of the following steps:
 \begin{enumerate}
-\item construct the Hankel matrix $\mathcal{H}$ from the Markov parameters;
+\item construct the Hankel matrix $\mathcal{H}$ from the experimental impulse response;
 \item factorize $\mathcal{H}$ into the matrices $\mathcal{O}$ and $\mathcal{C}$;
 \item derive the realization of $A$, $B$, $C$.
 \end{enumerate}
@@ -163,10 +168,24 @@ The Ho-Kalman algorithm allows one to derive a minimal realization of the system
 \subsubsection{Step 1: Construct $\mathcal{H}$}
 \label{sec:construct-Hankel}
 
-The impulse responses of the system are collected as Markov parameters eq.~\eqref{eq:markov-parameters}. The Hankel matrix is a banded matrix
+The impulse responses of the system are collected as the Hankel (banded) matrix
 \begin{equation}
-  \label{eq:hankel-matrix-definition}
-  \mathcal{H} \doteq \mathcal{O}\mathcal{C} =
+  \label{eq:hankel-matrix-from-impulse-response}
+  \mathcal{H} \doteq
+  \begin{bmatrix}
+    Y_1 & Y_2 & Y_3 & \ldots & Y_n \\
+    Y_2 & Y_3 & \ldots & & Y_{n+1} \\
+    Y_3 & \ddots & & & \ldots \\
+    \vdots & & & & \vdots \\
+    Y_n & \ldots & & & Y_{2n-1}
+  \end{bmatrix}
+\end{equation}
+where each of the $m$ columns of $Y_t$ is the system response after a time $t$ to an impulse applied at input $j$: only for SISO systems each entry is a scalar; for MIMO systems each entry has size $p\times m$.
+
+Because of eq.~\eqref{eq:markov-parameters}, the entries can be written as the product of the observability and controllability matrices:
+\begin{equation}
+  %\label{eq:hankel-matrix-definition}
+  \mathcal{O}\mathcal{C} =
   \begin{bmatrix}
     CB & CAB & CA^2 B & \ldots & CA^{n-1}B \\
     CAB & CA^2B & \ldots & & CA^nB \\
@@ -175,7 +194,6 @@ The impulse responses of the system are collected as Markov parameters eq.~\eqre
     CA^{n-1}B & \ldots & & & CA^{2n-2}B
   \end{bmatrix}
 \end{equation}
-with the Markov parameters along the diagonals. Only for SISO systems is each entry a scalar, for MIMO systems each entry has size $p\times m$.
 
 We are seeking a minimal representation of a controllable and observable system. Since both $\mathcal{O}$ and $\mathcal{C}$ are full rank, so must $\mathcal{H}$. The rank $n$ is however unknown: the approach is to construct an extended Hankel matrix $\mathcal{H}_{k,\ell}\in \mathbb{R}^{k\times \ell}$ and choose $k$ and $\ell$ larger than the expected value $n$. In doing so, $\mathcal{H}_{k,\ell}$ will be singular. To determine $n$ we select the largest upper left square minor of $\mathcal{H}_{k,\ell}$ that is non-singular.
 

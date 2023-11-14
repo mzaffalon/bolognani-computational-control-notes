@@ -11,21 +11,21 @@ One approach is to split the problem into the offline computation of the steady-
 \end{align*}
 and an online MPC to track the steady state $(x_s,u_s)$ using a quadratic cost function $g_k(x_k-x_s,u_k-u_s)$ that has the minimum at $(x_s,u_s)$
 \begin{align*}
-  \min_{\bsx,\bsu} & \sum_{k=0}^{K-1} g(x_k-x_s,u_k-u_s) \\
+  \min_{\bsu} & \sum_{k=0}^{K-1} g(x_k-x_s,u_k-u_s) \\
   \text{subject to} &\ x_{k+1} = f(x_k,u_k) \\
-                   & x_0 = x,\ x_K=x_s \\
-                   & x_k\in \mathcal{X}_k\\
-                   & u_k\in \mathcal{U}_k
+              & x_0 = x,\ x_K=x_s \\
+              & x_k\in \mathcal{X}_k\\
+              & u_k\in \mathcal{U}_k
 \end{align*}
 This two-stage approach is simpler to analyze but suffers from suboptimal cost of the system trajectory.
 
 Economic MPC uses instead the loss function $\ell$ directly in the dynamic optimization problem
 \begin{align*}
-  \min_{\bsx,\bsu} & \sum_{k=0}^{K-1} \ell(x_k,u_k) \\
+  \min_{\bsu} & \sum_{k=0}^{K-1} \ell(x_k,u_k) \\
   \text{subject to} &\ x_{k+1} = f(x_k,u_k) \\
-                   & x_0 = x,\ x_K=x_s \\
-                   & x_k\in \mathcal{X}_k \\
-                   & u_k\in \mathcal{U}_k
+              & x_0 = x,\ x_K=x_s \\
+              & x_k\in \mathcal{X}_k \\
+              & u_k\in \mathcal{U}_k
 \end{align*}
 eliminating the cascaded optimization by replacing it with a single time-scale problem for which the optimization can compute an efficient trajectory, at the cost of a more computationally difficult problem to solve in real-time, since often times the problem is not convex.
 
@@ -49,7 +49,7 @@ In tracking MPC, the terminal constraint $x_K=0$ was essential in proving that e
   \label{eq:eMPC-Lyapunov-like-inequality}
   W(x_{i+1}) \le W(x_i) + \ell(x_s,u_s) - \ell(x_i,u_0^\star(x_i))
 \end{equation}
-is not in general smaller than $W(x_i)$: to keep the system at steady-state, the cost may exceed the cost of the state after applying control input $u_0^\star(x)$. In contrast with tracking MPC where the stage cost $g_k$ had the property of being zero at the equilibrium point, in economic MPC, $\ell$ is not minimized at the steady state and stronger conditions are required to guarantee asymptotic stability. This is outside the scope of this introduction.
+is not in general smaller than $W(x_i)$: to keep the system at steady-state, the cost may exceed the cost of the state after applying control input $u_0^\star(x)$. This is because in contrast with tracking MPC where the stage cost $g_k$ had the property of being zero at the equilibrium point, in economic MPC, $\ell$ is not minimized at the steady state; $W(x)$ as defined in eq.~\eqref{eq:lyapunov-tracking-MPC} is no longer a Lyapunov function and stronger conditions are required to guarantee asymptotic stability. This is outside the scope of this introduction.
 
 Since eMPC can generate semi-periodic trajectories, are these trajectories better than tracking a point? The following theorem guarantees that trajectories created started from an arbitrary initial point are more efficient that tracking a steady-state provided the number of time steps $N$ is sufficiently large:
 \begin{theorem}
@@ -68,7 +68,7 @@ Since eMPC can generate semi-periodic trajectories, are these trajectories bette
   \begin{equation*}
     \frac{1}{N}\sum_{k=0}^{N-1} \left[W(x_{k+1}) - W(x_k)\right] = \underbrace{\frac{W(x_N) - W(x_0)}{N}}_{\rightarrow 0 \text{ when } N\rightarrow 0} \le \frac{1}{N}\sum_{k=0}^{N-1}  \left[\ell(x_s,u_s) - \ell(x_k,u_0^\star(x_k))\right]
   \end{equation*}
-  since the quantity $W(x_N) - W(x_0)$ is bounded\footnote{Indeed $W(x)$ is finite and non-negative $\forall x$: this implies $W(x_0) - W(x_N) \leq W(x_0)$.}. After rearranging the terms, we obtain the expression eq.~\eqref{eq:eMPC-inequality-trajectory-steadystate}.
+  since $W(x_N)$ is lower bounded\footnote{The assumption is that $\ell$ is lower bounded and that $W(x)$ is the sum of $K$ terms $\ell(x,u)$: one concludes that also $W$ is bounded.}. After rearranging the terms, we obtain the expression eq.~\eqref{eq:eMPC-inequality-trajectory-steadystate}~\cite[Sect.~2.8.1]{MPC-diehl}.
 \end{proof}
 
 %%% Local Variables:

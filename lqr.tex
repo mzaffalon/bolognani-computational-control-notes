@@ -217,7 +217,7 @@ where the diagonal $A$ matrix has eigenvalues outside of the unit circle, $\lamb
 
 However, even if a mode is not stable and not weighted in the cost function, it can still be stabilized with a controller that is suboptimal, by solving the ARE and selecting the \emph{largest} cone\footnote{Note that when $(Q^{1/2},A)$ is \emph{observable}, $P_\infty$ is the solution with the smallest cone. This was the outcome from a discussion in Moodle: Saverio, could you please check if this is correct?} solution $P_S$. It can be proven that
 \begin{itemize}
-\item of all the stabilizing solutions, $P_S$ is the \emph{only} optimal one;
+\item of all the \emph{stabilizing} solutions, $P_S$ is the optimal one;
 \item $P_S$ is the limit of the backward induction eq.~\eqref{eq:solution-timeindependent-ricatti-iterate} initialized at any $P_0\succ 0$: this is equivalent to assuming a non-zero terminal cost\footnote{This remark was made by Saverio on Moodle. It is however not clear to me why an arbitrarily small $P_0$ can be the reason for the iteration to converge to the stabilizing $P$.}. The limit $P_\infty$ of the iteration starting with $P_0=0$ does not produce a stabilizing solution.
 \end{itemize}
 
